@@ -1,0 +1,26 @@
+[
+  {
+    "id": "i_zhuara4n",
+    "providerId": "p_ykau9umh",
+    "providerUserId": "u_bzs91yjm",
+    "consumerId": "u_bzs91yjm",
+    "contactChannel": "call",
+    "status": "consumer_confirmed",
+    "consumerConfirmed": true,
+    "providerConfirmed": false,
+    "createdAt": "2026-04-21T21:47:42.810Z",
+    "updatedAt": "2026-04-21T21:48:17.320Z"
+  },
+  {
+    "id": "i_7cbvvuq9",
+    "providerId": "p_ykau9umh",
+    "providerUserId": "u_bzs91yjm",
+    "consumerId": "u_bzs91yjm",
+    "contactChannel": "call",
+    "status": "pending",
+    "consumerConfirmed": false,
+    "providerConfirmed": false,
+    "createdAt": "2026-04-22T18:45:44.635Z",
+    "updatedAt": "2026-04-22T18:45:44.635Z"
+  }
+]

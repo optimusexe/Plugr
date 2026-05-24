@@ -1,0 +1,54 @@
+{
+  "checks": [
+    {
+      "id": "vc_1776892881950_owrn0tr",
+      "userId": "u_bzs91yjm",
+      "checkType": "email_verified",
+      "completed": true,
+      "description": "Email address verified",
+      "icon": "✉️",
+      "createdAt": "2026-04-22T21:21:21.950Z",
+      "completedAt": "2026-04-22T21:21:21.950Z"
+    },
+    {
+      "id": "vc_1776892881950_dsf3hjp",
+      "userId": "u_bzs91yjm",
+      "checkType": "faculty_id_verified",
+      "completed": false,
+      "description": "Upload and verify your faculty/student ID",
+      "actionUrl": "/verification?action=id",
+      "icon": "🆔",
+      "createdAt": "2026-04-22T21:21:21.950Z"
+    },
+    {
+      "id": "vc_1776892881950_1xz8a57",
+      "userId": "u_bzs91yjm",
+      "checkType": "profile_photo_verified",
+      "completed": false,
+      "description": "Add a clear profile photo",
+      "actionUrl": "/profile/edit",
+      "icon": "📷",
+      "createdAt": "2026-04-22T21:21:21.950Z"
+    },
+    {
+      "id": "vc_1776892881950_upaeko4",
+      "userId": "u_bzs91yjm",
+      "checkType": "profile_complete",
+      "completed": false,
+      "description": "Complete all profile information",
+      "actionUrl": "/profile/edit",
+      "icon": "👤",
+      "createdAt": "2026-04-22T21:21:21.950Z"
+    },
+    {
+      "id": "vc_1776892881950_eidlb8i",
+      "userId": "u_bzs91yjm",
+      "checkType": "bio_verified",
+      "completed": false,
+      "description": "Write a bio and add your skills",
+      "actionUrl": "/profile/edit",
+      "icon": "✍️",
+      "createdAt": "2026-04-22T21:21:21.950Z"
+    }
+  ]
+}
