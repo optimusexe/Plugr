@@ -5,6 +5,8 @@ import {
   getAzureCommunicationEmailSender,
   getAzureCommunicationSmsFrom,
 } from "./config";
+import { verificationTemplate } from "@/lib/email-templates/verification";
+import { genericTemplate } from "@/lib/email-templates/generic";
 
 let emailClient: EmailClient | null = null;
 let smsClient: SmsClient | null = null;
@@ -48,11 +50,14 @@ export async function sendOtpEmail(to: string, code: string): Promise<boolean> {
     return false;
   }
 
+  const { subject, plainText, html } = verificationTemplate(code);
+
   const message = {
     senderAddress: sender,
     content: {
-      subject: "Your Plugr verification code",
-      plainText: `Your Plugr verification code is ${code}. It expires in 15 minutes.`,
+      subject,
+      plainText,
+      html,
     },
     recipients: {
       to: [{ address: to }],
@@ -78,5 +83,32 @@ export async function sendOtpSms(to: string, code: string): Promise<boolean> {
     message: `Your Plugr verification code is ${code}. It expires in 15 minutes.`,
   });
 
+  return true;
+}
+
+export async function sendEmail(to: string, subject: string, plainText: string): Promise<boolean> {
+  const client = getEmailClient();
+  const sender = getAzureCommunicationEmailSender();
+
+  if (!client || !sender) {
+    return false;
+  }
+
+  const { html } = genericTemplate(subject, plainText);
+
+  const message = {
+    senderAddress: sender,
+    content: {
+      subject,
+      plainText,
+      html,
+    },
+    recipients: {
+      to: [{ address: to }],
+    },
+  };
+
+  const poller = await (client as unknown as { beginSend: (payload: typeof message) => Promise<{ pollUntilDone: () => Promise<unknown> }> }).beginSend(message);
+  await poller.pollUntilDone();
   return true;
 }

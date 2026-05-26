@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "User not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ user: { id: user.id, fullName: user.fullName, email: user.email, verified: user.verified, isAdmin: user.isAdmin } });
+    return NextResponse.json({ user: { id: user.id, fullName: user.fullName, email: user.email, verified: user.verified, isAdmin: user.isAdmin, deactivatedUntil: user.deactivatedUntil } });
   } catch (error) {
     const resolved = resolveApiError(error, { defaultMessage: "Unable to load account profile." });
     logApiError("api/auth/me", resolved, error);

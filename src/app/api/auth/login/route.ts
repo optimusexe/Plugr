@@ -26,9 +26,15 @@ export async function POST(request: Request) {
       fullName: user.fullName,
       email: user.email,
       isAdmin: user.isAdmin,
+      deactivatedUntil: user.deactivatedUntil,
       profileComplete: Boolean(profile),
     });
   } catch (error) {
+    const maybeAccountError = error as { code?: string; message?: string };
+    if (maybeAccountError?.code === "ACCOUNT_DEACTIVATED" && maybeAccountError.message) {
+      return NextResponse.json({ error: maybeAccountError.message }, { status: 403 });
+    }
+
     const resolved = resolveApiError(error, {
       defaultStatus: 400,
       defaultMessage: "Unable to login right now.",

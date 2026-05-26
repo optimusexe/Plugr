@@ -16,6 +16,20 @@ async function trackInteraction(providerId: string, channel: "call" | "whatsapp"
   });
 }
 
+function formatPhoneForWhatsApp(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+
+  if (digits.startsWith("234")) {
+    return digits;
+  }
+
+  if (digits.startsWith("0") && digits.length === 11) {
+    return `234${digits.slice(1)}`;
+  }
+
+  return digits;
+}
+
 export function ProviderContactActions({ providerId, phone, email }: ProviderContactActionsProps) {
   const [tracking, setTracking] = useState(false);
 
@@ -30,7 +44,7 @@ export function ProviderContactActions({ providerId, phone, email }: ProviderCon
     setTracking(true);
     await trackInteraction(providerId, "whatsapp").catch(() => undefined);
     setTracking(false);
-    const cleanPhone = phone.replace(/[^\d]/g, "");
+    const cleanPhone = formatPhoneForWhatsApp(phone);
     const message = encodeURIComponent("Hi, I'd like to connect with you on Plugr!");
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank", "noopener,noreferrer");
   }

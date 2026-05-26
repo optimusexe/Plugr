@@ -56,6 +56,7 @@ export type UserAccount = {
   passwordHash: string;
   verified: boolean;
   isAdmin: boolean;
+  deactivatedUntil?: string;
   verificationCode?: string;
   verificationCodeExpiresAt?: string;
   createdAt: string;
@@ -66,6 +67,7 @@ export type NotificationType = "system" | "admin-broadcast" | "event";
 
 export type Notification = {
   id: string;
+  broadcastId?: string;
   userId: string;
   title: string;
   message: string;
@@ -86,6 +88,17 @@ export type NotificationBroadcastPayload = {
   actionUrl?: string;
   target: "all" | "specific";
   userIds?: string[];
+};
+
+export type AdminBroadcastSummary = {
+  broadcastId: string;
+  title: string;
+  message: string;
+  actionUrl?: string;
+  type: NotificationType;
+  recipientCount: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type AuthRegisterPayload = {

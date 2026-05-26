@@ -26,7 +26,19 @@ export async function uploadBufferToBlob(input: {
   const serviceClient = getBlobServiceClient();
   const containerName = input.containerName ?? getAzureStorageContainer();
   const containerClient = serviceClient.getContainerClient(containerName);
-  await containerClient.createIfNotExists();
+  try {
+    await containerClient.createIfNotExists();
+  } catch (err) {
+    // If the credential used doesn't allow creating containers (e.g., a SAS token without 'c' permission),
+    // allow uploads to proceed if the container already exists. Log a warning for visibility.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const code = (err as any)?.statusCode ?? (err as any)?.status ?? undefined;
+      console.warn(`Blob container createIfNotExists failed (status=${code}). Continuing assuming container exists.`);
+    } catch {
+      console.warn("Blob container createIfNotExists failed. Continuing assuming container exists.");
+    }
+  }
 
   const blobClient = containerClient.getBlockBlobClient(input.blobName);
   await blobClient.uploadData(input.buffer, {

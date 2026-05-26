@@ -17,6 +17,11 @@ export type AdminVerificationRow = {
   progress: VerificationProgress;
 };
 
+export type AdminVerifiedProfileRow = {
+  user: UserAccount;
+  profile: StudentProfile;
+};
+
 export type AdminOverview = {
   totalUsers: number;
   adminCount: number;
@@ -71,6 +76,33 @@ export async function getAdminVerificationQueue(): Promise<AdminVerificationRow[
   // cache short-lived to reduce repeated DB work
   await setCachedAsync(cacheKey, filtered, 30000);
   return filtered;
+}
+
+export async function getAdminVerifiedProfiles(): Promise<AdminVerifiedProfileRow[]> {
+  const cacheKey = `admin:verifiedProfiles`;
+  const cached = await getCachedAsync<AdminVerifiedProfileRow[]>(cacheKey);
+  if (cached) return cached;
+
+  const [users, profiles] = await Promise.all([getUsers(), getProfiles()]);
+  const usersById = new Map(users.map((user) => [user.id, user]));
+
+  const verifiedProfiles = profiles
+    .filter((profile) => profile.verificationStatus === "verified")
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+
+  const rows = verifiedProfiles
+    .map((profile) => {
+      const user = usersById.get(profile.userId);
+      if (!user) {
+        return null;
+      }
+
+      return { user, profile };
+    })
+    .filter((row): row is AdminVerifiedProfileRow => Boolean(row));
+
+  await setCachedAsync(cacheKey, rows, 30000);
+  return rows;
 }
 
 export async function getAdminOverview(): Promise<AdminOverview> {

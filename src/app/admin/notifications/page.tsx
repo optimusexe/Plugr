@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminNotificationBroadcast } from "@/components/admin/admin-notification-broadcast";
 import { getRecentBroadcasts } from "@/lib/notification-store";
+import { AdminMutationButton } from "@/components/admin/admin-mutation-button";
 
 export default async function AdminNotificationsPage() {
   const broadcasts = await getRecentBroadcasts(12);
@@ -32,12 +33,25 @@ export default async function AdminNotificationsPage() {
           <div className="mt-4 space-y-3">
             {broadcasts.length > 0 ? (
               broadcasts.map((notification) => (
-                <article key={notification.id} className="rounded-2xl border border-black/10 bg-[var(--card)] p-4">
+                <article key={notification.broadcastId} className="rounded-2xl border border-black/10 bg-[var(--card)] p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold">{notification.title}</p>
-                    <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
-                      {notification.type.replace(/-/g, " ")}
-                    </span>
+                    <div>
+                      <p className="font-semibold">{notification.title}</p>
+                      <p className="mt-1 text-xs text-[var(--muted)]">{notification.recipientCount} recipient{notification.recipientCount === 1 ? "" : "s"}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
+                        {notification.type.replace(/-/g, " ")}
+                      </span>
+                      <AdminMutationButton
+                        endpoint={`/api/admin/notifications/${notification.broadcastId}`}
+                        method="DELETE"
+                        payload={{}}
+                        label="Delete"
+                        busyLabel="Deleting..."
+                        className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                      />
+                    </div>
                   </div>
                   <p className="mt-2 text-sm text-[var(--muted)]">{notification.message}</p>
                   <p className="mt-2 text-xs text-[var(--muted)]">{new Date(notification.createdAt).toLocaleString()}</p>

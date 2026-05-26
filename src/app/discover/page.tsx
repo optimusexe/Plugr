@@ -41,15 +41,10 @@ export default async function DiscoverPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
             Discovery
           </p>
-          <h1 className="mt-2 font-[var(--font-display)] text-3xl font-bold">
+          <h1 className="mt-2 font-display text-3xl font-bold">
             Find the right student fast
           </h1>
-          <p className="mt-2 text-sm text-[var(--muted)]">
-            Results are ranked by credibility, response quality, profile completeness, and verification.
-          </p>
-          <p className="mt-4 text-sm text-[var(--muted)]">
-            Use search and verification filters below to discover real registered providers.
-          </p>
+          <p className="mt-2 text-sm text-[var(--muted)]">Who said your side hustle can&apos;t thrive alongside your studies?</p>
         </header>
         <DiscoverWorkflow initialProviders={providers} />
       </div>

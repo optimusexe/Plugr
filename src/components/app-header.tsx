@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { NotificationBell } from "@/components/notification-bell";
 
 export function AppHeader() {
@@ -13,6 +13,7 @@ export function AppHeader() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
+  const menuContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const userId = window.localStorage.getItem("plugr_user_id");
@@ -76,6 +77,31 @@ export function AppHeader() {
     router.refresh();
   }
 
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    function closeMenuOnOutsideInteraction(event: MouseEvent | TouchEvent | PointerEvent) {
+      const target = event.target as Node | null;
+      if (menuContainerRef.current && target && !menuContainerRef.current.contains(target)) {
+        setMenuOpen(false);
+      }
+    }
+
+    function closeMenuOnScroll() {
+      setMenuOpen(false);
+    }
+
+    document.addEventListener("pointerdown", closeMenuOnOutsideInteraction, true);
+    window.addEventListener("scroll", closeMenuOnScroll, true);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeMenuOnOutsideInteraction, true);
+      window.removeEventListener("scroll", closeMenuOnScroll, true);
+    };
+  }, [menuOpen]);
+
   return (
     <header className="fixed top-4 left-0 right-0 z-50">
       <div className="mx-auto w-full max-w-6xl px-4">
@@ -96,7 +122,7 @@ export function AppHeader() {
           <span className="font-display text-xl font-semibold">Plugr</span>
         </button>
 
-        <div className="relative z-50 flex items-center gap-2">
+        <div ref={menuContainerRef} className="relative z-50 flex items-center gap-2 overflow-visible">
           <NotificationBell />
           <button
             type="button"
@@ -122,7 +148,7 @@ export function AppHeader() {
           </button>
 
           {menuOpen ? (
-            <div className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-black/10 bg-white text-[var(--ink)] shadow-lg">
+            <div className="absolute right-0 top-full z-50 mt-3 w-52 overflow-hidden rounded-xl border border-black/10 bg-white text-[var(--ink)] shadow-lg">
               <Link
                 href="/discover"
                 onClick={() => setMenuOpen(false)}
@@ -143,6 +169,13 @@ export function AppHeader() {
                 className="block px-4 py-3 text-sm font-medium hover:bg-black/5"
               >
                 Verification
+              </Link>
+              <Link
+                href="/settings"
+                onClick={() => setMenuOpen(false)}
+                className="block px-4 py-3 text-sm font-medium hover:bg-black/5"
+              >
+                Settings
               </Link>
               <Link
                 href="/help"

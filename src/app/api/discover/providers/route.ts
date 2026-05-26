@@ -9,24 +9,23 @@ export async function GET(req: Request) {
     const q = url.searchParams.get("q") ?? "";
     const verifiedOnly = url.searchParams.get("verifiedOnly") === "true";
     const limit = Number(url.searchParams.get("limit") ?? "20");
-    const offset = Number(url.searchParams.get("offset") ?? "0");
+    const cursorParam = url.searchParams.get("cursor") ?? "";
 
-    const cacheKey = `discover:${q}:${verifiedOnly}:${limit}:${offset}`;
+    const cacheKey = `discover:${q}:${verifiedOnly}:${limit}:${cursorParam || "start"}`;
     const cached = await getCachedAsync<{ providers: any[] }>(cacheKey);
     if (cached) {
       return NextResponse.json(cached);
     }
 
     // support keyset cursor
-    const cursorParam = url.searchParams.get("cursor");
-    let cursorObj: { score: number; updatedAt: string; id: string } | undefined;
+    let cursorObj: unknown;
     if (cursorParam) {
       try {
         cursorObj = JSON.parse(Buffer.from(cursorParam, "base64").toString("utf8"));
       } catch {}
     }
 
-    const result = await findProviders(q, verifiedOnly, limit, cursorObj ?? undefined);
+    const result = await findProviders(q, verifiedOnly, limit, cursorObj as any);
     const payload = { providers: result.providers as any[], nextCursor: result.nextCursor };
     await setCachedAsync(cacheKey, payload, 30000);
 

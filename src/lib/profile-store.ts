@@ -144,6 +144,7 @@ async function ensureProfilesTable(): Promise<void> {
         await execute(`create index if not exists profiles_mode_idx on profiles(mode)`);
         await execute(`create index if not exists profiles_verification_idx on profiles(verification_status)`);
         await execute(`create index if not exists profiles_updated_at_idx on profiles(updated_at desc)`);
+          await execute(`create index if not exists profiles_discover_default_idx on profiles(verification_status desc, credibility desc, updated_at desc, id desc) where mode in ('provider','both')`);
         // Trigram/indexes - may fail on managed hosts without extension privileges
         try {
           await execute(`create index if not exists profiles_fullname_trgm on profiles using gin (full_name gin_trgm_ops)`);
@@ -296,6 +297,27 @@ export async function getProfileById(id: string): Promise<StudentProfile | null>
   return findProfileRowById(id);
 }
 
+export async function getProfilesByVerificationStatus(
+  verificationStatus: "pending" | "verified",
+  limit = 20,
+  offset = 0,
+): Promise<StudentProfile[]> {
+  await ensureProfilesTable();
+
+  const result = await query<ProfileRow>(
+    `select * from profiles where verification_status = $1 order by updated_at desc limit $2 offset $3`,
+    [verificationStatus, limit, offset],
+  );
+
+  return result.rows.map(mapProfileRow);
+}
+
+export async function countProfilesByVerificationStatus(verificationStatus: "pending" | "verified"): Promise<number> {
+  await ensureProfilesTable();
+  const result = await query<{ count: string }>(`select count(*) from profiles where verification_status = $1`, [verificationStatus]);
+  return Number(result.rows[0]?.count ?? 0);
+}
+
 export async function updateProfileCredibility(profileId: string, credibility: number): Promise<StudentProfile | null> {
   const profile = await getProfileById(profileId);
   if (!profile) {
@@ -355,10 +377,15 @@ export async function upsertProfile(payload: RegisterPayload): Promise<StudentPr
     primarySkill: payload.primarySkill ? normalizeText(payload.primarySkill) : undefined,
     bio: payload.bio ? normalizeText(payload.bio) : undefined,
     mode: payload.mode,
-    verificationStatus:
-      existing.verificationStatus === "verified" && normalizeText(payload.fullName) !== existing.fullName
-        ? "pending"
-        : existing.verificationStatus,
+    // If a verified profile changes key identity fields (name or profile image),
+    // send the badge back under review to preserve trust.
+    verificationStatus: (() => {
+      const newName = normalizeText(payload.fullName);
+      const newProfileImage = payload.profileImage ? payload.profileImage.trim() : undefined;
+      const nameChanged = newName !== existing.fullName;
+      const imageChanged = newProfileImage !== existing.profileImage;
+      return existing.verificationStatus === "verified" && (nameChanged || imageChanged) ? "pending" : existing.verificationStatus;
+    })(),
     updatedAt: now,
   };
 
@@ -383,49 +410,134 @@ export async function switchProfileMode(id: string, mode: ProfileMode): Promise<
 
 export type ProvidersPage = { providers: StudentProfile[]; nextCursor?: string };
 
+type DiscoverDefaultCursor = {
+  kind: "default";
+  verificationStatus: "verified" | "pending";
+  credibility: number;
+  updatedAt: string;
+  id: string;
+};
+
+type DiscoverSearchCursor = {
+  kind: "search";
+  score: number;
+  updatedAt: string;
+  id: string;
+};
+
+type DiscoverCursor = DiscoverDefaultCursor | DiscoverSearchCursor;
+
 export async function findProviders(
   search: string,
   verifiedOnly: boolean,
   limit = 20,
-  cursor?: { score: number; updatedAt: string; id: string } | null,
+  cursor?: DiscoverCursor | null,
 ): Promise<ProvidersPage> {
   await ensureProfilesTable();
 
   const q = search ? search.trim() : "";
   const hasQuery = q.length > 0;
 
-  const RECENCY_T = getRankingRecencyDays(); // days
+  if (!hasQuery) {
+    return findProvidersDefault(verifiedOnly, limit, cursor?.kind === "default" ? cursor : undefined);
+  }
 
-  // scoring expression (weights configurable via env vars)
-  const scoringExpr = `
-    (case when verification_status='verified' then 1 else 0 end) * ${getRankingWeightVerified()}
-    + (coalesce(credibility,0)/100.0) * ${getRankingWeightCredibility()}
-    + coalesce(ts_rank_cd(to_tsvector('english', coalesce(full_name,'') || ' ' || coalesce(primary_skill,'')), plainto_tsquery(${hasQuery ? "$1" : "NULL"})),0) * ${getRankingWeightRelevance()}
-    + exp(-(extract(epoch from (now() - updated_at))/86400.0) / ${RECENCY_T})
+  return findProvidersSearch(q, verifiedOnly, limit, cursor?.kind === "search" ? cursor : undefined);
+}
+
+async function findProvidersDefault(
+  verifiedOnly: boolean,
+  limit: number,
+  cursor?: DiscoverDefaultCursor,
+): Promise<ProvidersPage> {
+  const whereParts: string[] = ["mode in ('provider','both')"];
+  const params: unknown[] = [];
+
+  if (verifiedOnly) {
+    whereParts.push("verification_status = 'verified'");
+  }
+
+  let cursorClause = "";
+  if (cursor) {
+    params.push(cursor.verificationStatus, cursor.credibility, cursor.updatedAt, cursor.id);
+    cursorClause = `AND (
+      verification_status < $1
+      OR (verification_status = $1 AND (credibility < $2 OR (credibility = $2 AND (updated_at < $3 OR (updated_at = $3 AND id < $4)))))
+    )`;
+  }
+
+  params.push(limit);
+  const limitParamIndex = params.length;
+
+  const finalSql = `
+    SELECT id, user_id, profile_image, products, full_name, faculty, department, level, phone, email, location_text, map_link, primary_skill, bio, mode, verification_status, credibility, created_at, updated_at
+    FROM profiles
+    WHERE ${whereParts.join(" AND ")}
+    ${cursorClause}
+    ORDER BY verification_status DESC, credibility DESC, updated_at DESC, id DESC
+    LIMIT $${limitParamIndex}
   `;
+
+  const rows = await query<any>(finalSql, params);
+  const mapped = rows.rows.map(mapProfileRow);
+
+  let nextCursor: string | undefined = undefined;
+  if (rows.rows.length === limit) {
+    const last = rows.rows[rows.rows.length - 1];
+    try {
+      nextCursor = Buffer.from(
+        JSON.stringify({
+          kind: "default",
+          verificationStatus: last.verification_status,
+          credibility: Number(last.credibility ?? 0),
+          updatedAt: new Date(last.updated_at).toISOString(),
+          id: last.id,
+        }),
+      ).toString("base64");
+    } catch {}
+  }
+
+  return { providers: mapped, nextCursor };
+}
+
+async function findProvidersSearch(
+  q: string,
+  verifiedOnly: boolean,
+  limit: number,
+  cursor?: DiscoverSearchCursor,
+): Promise<ProvidersPage> {
+  const RECENCY_T = getRankingRecencyDays(); // days
 
   const whereParts: string[] = ["mode in ('provider','both')"];
   const params: unknown[] = [];
-  if (hasQuery) {
-    whereParts.push(`to_tsvector('english', coalesce(full_name,'') || ' ' || coalesce(primary_skill,'')) @@ plainto_tsquery($1)`);
-    params.push(q);
-  }
+  whereParts.push(`to_tsvector('english', coalesce(full_name,'') || ' ' || coalesce(primary_skill,'')) @@ plainto_tsquery($1)`);
+  params.push(q);
   if (verifiedOnly) whereParts.push("verification_status = 'verified'");
 
+  const scoreParts = [
+    `(case when verification_status='verified' then 1 else 0 end) * ${getRankingWeightVerified()}`,
+    `(coalesce(credibility,0)/100.0) * ${getRankingWeightCredibility()}`,
+    `exp(-(extract(epoch from (now() - updated_at))/86400.0) / ${RECENCY_T})`,
+  ];
+
+  scoreParts.splice(
+    2,
+    0,
+    `coalesce(ts_rank_cd(to_tsvector('english', coalesce(full_name,'') || ' ' || coalesce(primary_skill,'')), plainto_tsquery($1)),0) * ${getRankingWeightRelevance()}`,
+  );
+
   const scoredCte = `WITH scored AS (
-    SELECT id, user_id, profile_image, products, full_name, faculty, department, level, phone, email, location_text, map_link, primary_skill, bio, mode, verification_status, credibility, created_at, updated_at, (${scoringExpr}) AS score
+    SELECT id, user_id, profile_image, products, full_name, faculty, department, level, phone, email, location_text, map_link, primary_skill, bio, mode, verification_status, credibility, created_at, updated_at, (${scoreParts.join(" + ")}) AS score
     FROM profiles
     WHERE ${whereParts.join(' AND ')}
   )`;
 
   let cursorClause = "";
   if (cursor) {
-    // keyset: score desc, updated_at desc, id desc
     params.push(cursor.score, cursor.updatedAt, cursor.id);
-    const scoreParamIndex = params.length - 2; // score param index (1-based in SQL will be +1)
+    const scoreParamIndex = params.length - 2;
     const updatedParamIndex = params.length - 1;
     const idParamIndex = params.length;
-    // Use parameter positions relative to params array length - we'll use $n directly
     cursorClause = `WHERE (score < $${scoreParamIndex} OR (score = $${scoreParamIndex} AND (updated_at < $${updatedParamIndex} OR (updated_at = $${updatedParamIndex} AND id < $${idParamIndex}))))`;
   }
 
@@ -448,9 +560,9 @@ export async function findProviders(
   if (rows.rows.length === limit) {
     const last = rows.rows[rows.rows.length - 1];
     try {
-      nextCursor = Buffer.from(JSON.stringify({ score: Number(last.score), updatedAt: new Date(last.updated_at).toISOString(), id: last.id })).toString(
-        "base64",
-      );
+      nextCursor = Buffer.from(
+        JSON.stringify({ kind: "search", score: Number(last.score), updatedAt: new Date(last.updated_at).toISOString(), id: last.id }),
+      ).toString("base64");
     } catch {}
   }
 

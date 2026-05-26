@@ -93,9 +93,14 @@ export function AuthLoginForm() {
       >
         {busy ? "Signing in..." : "Login"}
       </button>
-      <p className="text-center text-sm text-[var(--muted)] mt-4">
-        Don&apos;t have an account? <a href="/auth?mode=register" className="font-semibold text-[var(--accent)]">Sign up here</a>
-      </p>
+      <div className="flex items-center justify-between mt-4">
+        <p className="text-sm text-[var(--muted)]">
+          Don&apos;t have an account? <a href="/auth?mode=register" className="font-semibold text-[var(--accent)]">Sign up</a>
+        </p>
+        <p>
+          <a href="/auth/forgot" className="text-sm font-semibold text-[var(--accent)]">Forgot password?</a>
+        </p>
+      </div>
     </form>
     </div>
   );

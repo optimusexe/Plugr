@@ -10,6 +10,7 @@ import {
 } from "@/lib/provider-seo";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const alt = "Plugr provider profile preview";
 export const size = {
   width: 1200,
@@ -93,7 +94,23 @@ export default async function Image({ params }: PageProps) {
         >
           <div style={{ flex: 1.15, padding: 54, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <img src="https://useplugr.app/plugr.png" width={64} height={64} style={{ borderRadius: 18 }} />
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 18,
+                  background: "linear-gradient(135deg, #0F766E 0%, #115E59 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
+                  fontSize: 28,
+                  fontWeight: 800,
+                  letterSpacing: -1,
+                }}
+              >
+                P
+              </div>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "#64748B" }}>Plugr</span>
                 <span style={{ fontSize: 16, color: "#64748B" }}>Campus talent discovery</span>

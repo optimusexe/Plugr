@@ -9,9 +9,10 @@ type AdminMutationButtonProps = {
   label: string;
   busyLabel?: string;
   className?: string;
+  method?: "PATCH" | "DELETE";
 };
 
-export function AdminMutationButton({ endpoint, payload, label, busyLabel = "Working...", className }: AdminMutationButtonProps) {
+export function AdminMutationButton({ endpoint, payload, label, busyLabel = "Working...", className, method = "PATCH" }: AdminMutationButtonProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -22,7 +23,7 @@ export function AdminMutationButton({ endpoint, payload, label, busyLabel = "Wor
 
     try {
       const response = await fetch(endpoint, {
-        method: "PATCH",
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });

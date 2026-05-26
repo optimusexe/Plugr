@@ -65,6 +65,22 @@ async function run() {
       updated_at timestamptz not null default now()
     )`);
 
+    // Add deactivated_until to users if missing
+    try {
+      await client.query('alter table users add column if not exists deactivated_until timestamptz null');
+    } catch (e) {
+      console.warn('Failed to add deactivated_until column:', e.message || e);
+    }
+
+    // Audit logs
+    await client.query(`create table if not exists audit_logs (
+      id text primary key,
+      user_id text null,
+      action text not null,
+      details jsonb null,
+      created_at timestamptz not null default now()
+    )`);
+
     await client.query(`create table if not exists profiles (
       id text primary key,
       user_id text not null unique,
@@ -92,6 +108,7 @@ async function run() {
       await client.query("create index if not exists profiles_mode_idx on profiles(mode)");
       await client.query("create index if not exists profiles_verification_idx on profiles(verification_status)");
       await client.query("create index if not exists profiles_updated_at_idx on profiles(updated_at desc)");
+      await client.query("create index if not exists profiles_discover_default_idx on profiles(verification_status desc, credibility desc, updated_at desc, id desc) where mode in ('provider','both')");
 
       // Attempt trigram indexes; ignore if not supported
       try {

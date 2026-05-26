@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
+import { AppHeader } from "@/components/app-header";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { getNotificationsForUser } from "@/lib/notification-store";
 
@@ -14,12 +13,13 @@ export default async function NotificationsPage() {
   const notifications = await getNotificationsForUser(userId, 50);
 
   return (
-    <main className="page-shell px-5 pt-28 sm:px-8 lg:px-16">
-      <SiteHeader current="/notifications" variant="default" />
+    <>
+      <main className="page-shell px-5 pb-8 pt-28 sm:px-8 lg:px-16">
+      <AppHeader />
       <div className="mx-auto max-w-5xl pb-8">
         <NotificationCenter userId={userId} initialNotifications={notifications} />
       </div>
-      <SiteFooter />
-    </main>
+      </main>
+    </>
   );
 }

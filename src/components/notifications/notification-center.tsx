@@ -101,7 +101,7 @@ export function NotificationCenter({ userId, initialNotifications }: Notificatio
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Inbox</p>
           <h1 className="mt-1 font-display text-4xl font-semibold">Notifications</h1>
-          <p className="mt-2 text-sm text-[var(--muted)]">Stay up to date with welcome messages, feature drops, and admin announcements.</p>
+          <p className="mt-2 text-sm text-[var(--muted)]">Stay up to date with updated infos.</p>
         </div>
         <Link href="/discover" className="rounded-xl border border-black/10 bg-[var(--card)] px-4 py-2 text-sm font-semibold">
           Back to discover

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { StudentProfile } from "@/lib/types";
 import { formatCredibilityScore } from "@/lib/credibility-colors";
 
@@ -37,6 +37,8 @@ export function DiscoverWorkflow({ initialProviders }: DiscoverWorkflowProps) {
   const [limit, setLimit] = useState<number>(20);
   const [cursor, setCursor] = useState<string | null>(null);
   const [reloadCounter, setReloadCounter] = useState(0);
+  const cursorRef = useRef<string | null>(null);
+  const previousSearchKeyRef = useRef<string | null>(null);
 
   const facultyOptions = useMemo(() => {
     const values = new Set(rawProviders.map((provider) => provider.faculty).filter(Boolean));
@@ -111,18 +113,25 @@ export function DiscoverWorkflow({ initialProviders }: DiscoverWorkflowProps) {
   }, [providers.length]);
 
   const activeSearch = query.trim();
+  const searchKey = useMemo(() => {
+    return [query.trim(), verificationFilter, limit].join("|");
+  }, [query, verificationFilter, limit]);
 
   useEffect(() => {
     const controller = new AbortController();
 
     async function loadProviders() {
+      const searchChanged = previousSearchKeyRef.current !== searchKey;
+      previousSearchKeyRef.current = searchKey;
+      const requestCursor = searchChanged ? null : cursorRef.current;
+
       setLoading(true);
       setError(null);
       try {
         const params = new URLSearchParams();
         if (query.trim()) params.set("q", query.trim());
         params.set("limit", String(limit));
-        if (cursor) params.set("cursor", cursor);
+        if (requestCursor) params.set("cursor", requestCursor);
         if (verificationFilter === "verified") params.set("verifiedOnly", "true");
 
         const response = await fetch(`/api/discover/providers?${params.toString()}`, {
@@ -132,7 +141,7 @@ export function DiscoverWorkflow({ initialProviders }: DiscoverWorkflowProps) {
         if (!response.ok) throw new Error("Unable to fetch providers right now.");
 
         const data = (await response.json()) as { providers: StudentProfile[]; nextCursor?: string };
-        if (!cursor) {
+        if (!requestCursor) {
           // replace with fresh page
           setRawProviders(data.providers);
         } else {
@@ -144,6 +153,7 @@ export function DiscoverWorkflow({ initialProviders }: DiscoverWorkflowProps) {
             return Array.from(map.values());
           });
         }
+        cursorRef.current = data.nextCursor ?? null;
         setCursor(data.nextCursor ?? null);
       } catch (loadError) {
         if ((loadError as Error).name !== "AbortError") {
@@ -159,10 +169,11 @@ export function DiscoverWorkflow({ initialProviders }: DiscoverWorkflowProps) {
     return () => {
       controller.abort();
     };
-  }, [query, cursor, verificationFilter, limit, reloadCounter]);
+  }, [query, verificationFilter, limit, reloadCounter, searchKey]);
 
   // reset cursor when query or verification filter changes
   useEffect(() => {
+    cursorRef.current = null;
     setCursor(null);
   }, [query, verificationFilter]);
 

@@ -74,7 +74,7 @@ export function SiteHeader({ current, variant = "default" }: SiteHeaderProps) {
             <Link href="/auth" className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white">
               Get started
             </Link>
-            <NotificationBell className="ml-1" />
+            {/* Notification bell intentionally hidden on marketing landing header */}
           </>
         ) : (
           <>
