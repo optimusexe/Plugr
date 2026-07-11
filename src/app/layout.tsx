@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     siteName: "Plugr",
     images: [
       {
-        url: "/plugr-og.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Plugr - Campus Talent Map",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     creator: "@useplugr",
     title: "Plugr - Campus Talent Map",
     description: "Find the talent. Be the talent. The all-in-one discovery layer for professionals on campus.",
-    images: ["/plugr-og.png"],
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,

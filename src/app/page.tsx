@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     url: "https://useplugr.app",
     images: [
       {
-        url: "/plugr-og.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Plugr - Campus Talent Map",
