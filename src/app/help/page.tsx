@@ -152,7 +152,7 @@ export default function HelpCenterPage() {
         { name: "Home", url: "https://useplugr.app" },
         { name: "Help Center", url: "https://useplugr.app/help" },
       ])}
-      <main className="page-shell px-5 pt-28 sm:px-8 lg:px-16">
+      <main className="page-shell px-5 pt-4 sm:px-8 lg:px-16">
       <SiteHeader current="/help" variant="default" />
       <HelpCenterHub guides={helpTopics} faqs={helpFaqs} supportLinks={supportLinks} />
       <LiveChatWidget />

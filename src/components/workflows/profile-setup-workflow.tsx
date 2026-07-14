@@ -164,7 +164,7 @@ export function ProfileSetupWorkflow() {
   const router = useRouter();
 
   const steps: Array<{ id: StepId; title: string; hint: string }> = useMemo(() => {
-    const base: Array<{ id: StepId; title: string; hint: string }> = [
+    return [
       { id: "photo", title: "Add your profile photo", hint: "Use a clear face photo for trust and faster responses." },
       { id: "name", title: "What is your full name?", hint: "Use your real name as it appears on campus records." },
       { id: "faculty", title: "Select your faculty", hint: "Choose your current faculty." },
@@ -173,19 +173,10 @@ export function ProfileSetupWorkflow() {
       { id: "location", title: "Choose your campus location", hint: "Pick where you are usually available on campus." },
       { id: "phone", title: "What phone number should students call?", hint: "Use an active number for quick connection." },
       { id: "skill", title: "Select your skill", hint: "Choose one main skill students can find you for." },
-    ];
-
-    if (form.primarySkill === "Other") {
-      base.push({ id: "otherSkill", title: "Tell us your skill", hint: "Enter the skill that best describes what you offer." });
-    }
-
-    base.push(
       { id: "bio", title: "Add a short bio", hint: "Give students a quick reason to trust you." },
       { id: "mode", title: "How do you want to use Plugr?", hint: "You can offer services, request services, or both." },
-    );
-
-    return base;
-  }, [form.primarySkill]);
+    ];
+  }, []);
 
   const currentStep = steps[stepIndex];
   const progress = Math.round(((stepIndex + 1) / steps.length) * 100);
@@ -268,9 +259,7 @@ export function ProfileSetupWorkflow() {
       case "phone":
         return form.phone.trim().length >= 10;
       case "skill":
-        return Boolean(form.primarySkill);
-      case "otherSkill":
-        return form.otherSkill.trim().length > 1;
+        return Boolean(form.primarySkill) && (form.primarySkill !== "Other" || form.otherSkill.trim().length > 1);
       case "bio":
         return true;
       case "mode":
@@ -472,26 +461,37 @@ export function ProfileSetupWorkflow() {
         );
       case "skill":
         return (
-          <select
-            required
-            value={form.primarySkill}
-            onChange={(event) =>
-              setForm((prev) => ({
-                ...prev,
-                primarySkill: event.target.value,
-                otherSkill: event.target.value === "Other" ? prev.otherSkill : "",
-              }))
-            }
-            className="w-full rounded-xl border border-black/15 bg-white px-4 py-3 text-sm"
-          >
-            <option value="">Select skill</option>
-            {SKILL_OPTIONS.map((skill) => (
-              <option key={skill} value={skill}>
-                {skill}
-              </option>
-            ))}
-            <option value="Other">Other</option>
-          </select>
+          <div className="space-y-3">
+            <select
+              required
+              value={form.primarySkill}
+              onChange={(event) =>
+                setForm((prev) => ({
+                  ...prev,
+                  primarySkill: event.target.value,
+                  otherSkill: event.target.value === "Other" ? prev.otherSkill : "",
+                }))
+              }
+              className="w-full rounded-xl border border-black/15 bg-white px-4 py-3 text-sm"
+            >
+              <option value="">Select skill</option>
+              {SKILL_OPTIONS.map((skill) => (
+                <option key={skill} value={skill}>
+                  {skill}
+                </option>
+              ))}
+              <option value="Other">Other</option>
+            </select>
+            {form.primarySkill === "Other" && (
+              <input
+                required
+                placeholder="Enter your skill"
+                value={form.otherSkill}
+                onChange={(event) => setForm((prev) => ({ ...prev, otherSkill: event.target.value }))}
+                className="w-full rounded-xl border border-black/15 bg-white px-4 py-3 text-sm"
+              />
+            )}
+          </div>
         );
       case "otherSkill":
         return (

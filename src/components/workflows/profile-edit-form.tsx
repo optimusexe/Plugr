@@ -16,6 +16,7 @@ type ProfileEditFormState = {
   email: string;
   locationText: string;
   primarySkill: string;
+  otherSkill: string;
   bio: string;
   mode: ProfileMode;
   products: ProfileProduct[];
@@ -188,6 +189,7 @@ export function ProfileEditForm() {
             email: userData.user.email,
             locationText: "",
             primarySkill: "",
+            otherSkill: "",
             bio: "",
             mode: "provider",
             products: [],
@@ -195,6 +197,9 @@ export function ProfileEditForm() {
           });
           return;
         }
+
+        const loadedSkill = profileData.profile.primarySkill || "";
+        const matchedSkill = SKILL_OPTIONS.includes(loadedSkill) ? loadedSkill : loadedSkill ? "Other" : "";
 
         setForm({
           profileImage: profileData.profile.profileImage || "",
@@ -205,7 +210,8 @@ export function ProfileEditForm() {
           phone: profileData.profile.phone,
           email: profileData.profile.email || userData.user.email,
           locationText: profileData.profile.locationText,
-          primarySkill: profileData.profile.primarySkill || "",
+          primarySkill: matchedSkill,
+          otherSkill: matchedSkill === "Other" ? loadedSkill : "",
           bio: profileData.profile.bio || "",
           mode: profileData.profile.mode,
           products: profileData.profile.products || [],
@@ -314,6 +320,8 @@ export function ProfileEditForm() {
     setError(null);
     setMessage(null);
 
+    const resolvedSkill = form.primarySkill === "Other" ? form.otherSkill.trim() : form.primarySkill;
+
     try {
       const payload = {
         userId,
@@ -325,7 +333,7 @@ export function ProfileEditForm() {
         phone: form.phone,
         email: form.email,
         locationText: form.locationText,
-        primarySkill: form.primarySkill,
+        primarySkill: resolvedSkill,
         bio: form.bio,
         mode: form.mode,
         products: form.products.filter((product) => product.name.trim()).map((product) => ({
@@ -509,19 +517,30 @@ export function ProfileEditForm() {
             </label>
             <label className="text-sm font-medium text-[var(--muted)]">
               Skill
-              <select
-                value={form.primarySkill}
-                onChange={(event) => setForm((prev) => (prev ? { ...prev, primarySkill: event.target.value } : prev))}
-                className="mt-1 w-full rounded-xl border border-black/15 px-3 py-2 text-sm"
-                required
-              >
-                <option value="">Select skill</option>
-                {SKILL_OPTIONS.map((skill) => (
-                  <option key={skill} value={skill}>
-                    {skill}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <select
+                  value={form.primarySkill}
+                  onChange={(event) => setForm((prev) => (prev ? { ...prev, primarySkill: event.target.value, otherSkill: event.target.value === "Other" ? prev.otherSkill : "" } : prev))}
+                  className="mt-1 w-full rounded-xl border border-black/15 px-3 py-2 text-sm"
+                  required
+                >
+                  <option value="">Select skill</option>
+                  {SKILL_OPTIONS.map((skill) => (
+                    <option key={skill} value={skill}>
+                      {skill}
+                    </option>
+                  ))}
+                </select>
+                {form.primarySkill === "Other" && (
+                  <input
+                    value={form.otherSkill}
+                    onChange={(event) => setForm((prev) => (prev ? { ...prev, otherSkill: event.target.value } : prev))}
+                    placeholder="Enter your skill"
+                    className="w-full rounded-xl border border-black/15 px-3 py-2 text-sm"
+                    required
+                  />
+                )}
+              </div>
             </label>
             <label className="text-sm font-medium text-[var(--muted)] sm:col-span-2">
               Bio

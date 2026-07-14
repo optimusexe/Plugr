@@ -187,7 +187,18 @@ export function AuthRegisterFlow() {
               <input required type="password" minLength={6} placeholder="Confirm your password" value={state.confirmPassword} onChange={(event) => setState((prev) => ({ ...prev, confirmPassword: event.target.value }))} className="w-full rounded-xl border border-white/40 bg-white/50 backdrop-blur-sm px-4 py-3 text-sm placeholder-[var(--muted)] transition focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30" />
             </div>
             {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2">{error}</p>}
-            <button type="submit" disabled={busy} className="w-full rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:shadow-lg disabled:opacity-60 mt-4">{busy ? "Creating account..." : "Create account"}</button>
+            <p className="text-xs text-[var(--muted)] text-center">
+              By clicking Create account, you agree to our{" "}
+              <a href="/terms" className="font-semibold text-[var(--accent)] hover:underline">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="/privacy-policy" className="font-semibold text-[var(--accent)] hover:underline">
+                Privacy Policy
+              </a>
+              .
+            </p>
+            <button type="submit" disabled={busy} className="w-full rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:shadow-lg disabled:opacity-60 mt-2">{busy ? "Creating account..." : "Create account"}</button>
           </form>
           <p className="text-center text-sm text-[var(--muted)] mt-4">Already have an account? <a href="/auth?mode=login" className="font-semibold text-[var(--accent)]">Login here</a></p>
         </>

@@ -4,7 +4,7 @@ import Image from "next/image";
 export function SiteFooter() {
   return (
     <footer className="relative mt-0 w-[calc(100%+2.5rem)] -mx-5 overflow-hidden border-t border-white/25 bg-[linear-gradient(135deg,var(--accent),#0b5f58)] text-white sm:w-[calc(100%+4rem)] sm:-mx-8 lg:w-[calc(100%+8rem)] lg:-mx-16">
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-16">
+      <div className="mx-auto grid max-w-6xl gap-12 px-5 py-14 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:px-16">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <Image
@@ -20,8 +20,9 @@ export function SiteFooter() {
             A student-first discovery and connection platform for quick search, trusted profiles, and fast campus contact.
           </p>
         </div>
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex flex-col gap-6 sm:flex-row sm:gap-12 lg:gap-16">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))] lg:gap-12">
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Explore</p>
             <div className="flex flex-col gap-3 text-sm font-medium text-white/85">
               <Link href="/#features" className="transition hover:text-white">
                 Features
@@ -29,15 +30,13 @@ export function SiteFooter() {
               <Link href="/#how-it-works" className="transition hover:text-white">
                 How it works
               </Link>
-            </div>
-            <div className="flex flex-col gap-3 text-sm font-medium text-white/85">
-              <Link href="/#testimonials" className="transition hover:text-white">
-                Testimonials
-              </Link>
-              <Link href="/#faqs" className="transition hover:text-white">
-                FAQs
+              <Link href="/#who-is-plugr-for" className="transition hover:text-white">
+                Who it&apos;s for
               </Link>
             </div>
+          </div>
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Account</p>
             <div className="flex flex-col gap-3 text-sm font-medium text-white/85">
               <Link href="/register" className="transition hover:text-white">
                 Register
@@ -50,27 +49,55 @@ export function SiteFooter() {
               </Link>
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Policies</p>
+            <div className="flex flex-col gap-3 text-sm font-medium text-white/85">
+              <Link href="/privacy-policy" className="transition hover:text-white">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="transition hover:text-white">
+                Terms of Service
+              </Link>
+            </div>
+          </div>
+          <div className="space-y-4 sm:col-span-2 lg:col-span-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Connect</p>
+            <div className="flex flex-wrap items-center gap-4">
             <a
               href="https://x.com/useplugr"
               target="_blank"
               rel="noopener noreferrer"
-              className="transition hover:text-white/60 text-white/85"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-white/30 hover:text-white"
               aria-label="Follow Plugr on X"
             >
-              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.657l-5.22-6.817-5.974 6.817h-3.31l7.732-8.835L2.882 2.25h6.82l4.713 6.231 5.429-6.231zM17.2 20.896h1.833L6.838 3.897H4.872l12.328 16.999z" />
               </svg>
+              X
+            </a>
+            <a
+              href="https://instagram.com/useplugr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-white/30 hover:text-white"
+              aria-label="Follow Plugr on Instagram"
+            >
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7zm5 2.5A5.5 5.5 0 1 1 6.5 12 5.51 5.51 0 0 1 12 6.5zm0 2A3.5 3.5 0 1 0 15.5 12 3.5 3.5 0 0 0 12 8.5zM18 5.75a1.25 1.25 0 1 1-1.25 1.25A1.25 1.25 0 0 1 18 5.75z" />
+              </svg>
+              @useplugr
             </a>
             <a
               href="mailto:contact@useplugr.app"
-              className="transition hover:text-white/60 text-white/85"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-white/30 hover:text-white"
               aria-label="Email Plugr"
             >
-              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
               </svg>
+              Email
             </a>
+            </div>
           </div>
         </div>
       </div>

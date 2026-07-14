@@ -22,7 +22,7 @@ export function AdminShell({ adminName, children }: AdminShellProps) {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7f4ed_0%,#eef4ef_48%,#f8faf8_100%)] text-[var(--ink)]">
-      <div className="mx-auto flex min-h-screen max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:pl-72">
+      <div className="mx-auto flex min-h-screen max-w-7xl gap-6 px-4 py-3 sm:px-6 lg:px-8 lg:pl-72">
         <aside className="hidden lg:block fixed left-8 top-6 w-64">
           <div className="rounded-3xl border border-black/10 bg-white/80 p-5 shadow-[0_20px_60px_rgba(15,25,20,0.08)] backdrop-blur-xl">
             <div className="mb-6">
