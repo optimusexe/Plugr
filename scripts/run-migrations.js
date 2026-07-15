@@ -103,11 +103,45 @@ async function run() {
       updated_at timestamptz not null default now()
     )`);
 
+    // Add new ranking columns if missing
+    try {
+      await client.query("alter table profiles add column if not exists last_active_at timestamptz null");
+      await client.query("alter table profiles add column if not exists view_count integer not null default 0");
+      await client.query("alter table profiles add column if not exists contact_count integer not null default 0");
+
+      // Backfill last_active_at from updated_at for existing rows
+      await client.query("update profiles set last_active_at = updated_at where last_active_at is null");
+
+      // Backfill view_count from analytics_events
+      await client.query(`
+        update profiles p set view_count = coalesce((
+          select count(*) from analytics_events ae
+          where ae.provider_id = p.id and ae.event_type = 'profile_view'
+        ), 0)
+        where p.view_count = 0
+      `);
+
+      // Backfill contact_count from analytics_events
+      await client.query(`
+        update profiles p set contact_count = coalesce((
+          select count(*) from analytics_events ae
+          where ae.provider_id = p.id and ae.event_type = 'contact_click'
+        ), 0)
+        where p.contact_count = 0
+      `);
+
+      // Index for new columns
+      await client.query("create index if not exists profiles_last_active_at_idx on profiles(last_active_at desc)");
+    } catch (e) {
+      console.warn('Failed to add ranking columns:', e.message || e);
+    }
+
     // Indexes
     try {
       await client.query("create index if not exists profiles_mode_idx on profiles(mode)");
       await client.query("create index if not exists profiles_verification_idx on profiles(verification_status)");
       await client.query("create index if not exists profiles_updated_at_idx on profiles(updated_at desc)");
+      // Composite index for discover - supports both old and new scoring
       await client.query("create index if not exists profiles_discover_default_idx on profiles(verification_status desc, credibility desc, updated_at desc, id desc) where mode in ('provider','both')");
 
       // Attempt trigram indexes; ignore if not supported
@@ -121,6 +155,24 @@ async function run() {
       }
     } catch (e) {
       console.warn('Index creation warning:', e.message || e);
+    }
+
+    // Analytics events table
+    await client.query(`create table if not exists analytics_events (
+      id text primary key,
+      provider_id text not null,
+      event_type text not null,
+      metadata jsonb null,
+      visitor_id text null,
+      created_at timestamptz not null default now()
+    )`);
+
+    // Analytics indexes
+    try {
+      await client.query("create index if not exists analytics_events_provider_idx on analytics_events(provider_id, event_type, created_at desc)");
+      await client.query("create index if not exists analytics_events_created_at_idx on analytics_events(created_at desc)");
+    } catch (e) {
+      console.warn('Analytics index creation warning:', e.message || e);
     }
 
     console.log('Migrations complete.');

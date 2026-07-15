@@ -28,6 +28,9 @@ export type StudentProfile = {
   mode: ProfileMode;
   verificationStatus: VerificationStatus;
   credibility: number;
+  lastActiveAt?: string;
+  viewCount: number;
+  contactCount: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -223,4 +226,69 @@ export type VerificationProgress = {
   completedChecks: number;
   percentageComplete: number;
   checks: VerificationCheck[];
+};
+
+export type AnalyticsEventType =
+  | "profile_view"
+  | "contact_click"
+  | "search_appearance"
+  | "product_view";
+
+export type AnalyticsEvent = {
+  id: string;
+  providerId: string;
+  eventType: AnalyticsEventType;
+  metadata?: Record<string, unknown>;
+  visitorId?: string;
+  createdAt: string;
+};
+
+export type AnalyticsOverview = {
+  profileViews: { total: number; trend: number };
+  contactClicks: { total: number; trend: number };
+  searchAppearances: { total: number; trend: number };
+  conversionRate: { value: number; trend: number };
+  averageRating: { value: number | null; trend: number };
+  totalReviews: number;
+  credibilityScore: {
+    total: number;
+    profileSetup: number;
+    verification: number;
+    reviews: number;
+  };
+  responseTime: {
+    averageHours: number | null;
+    medianHours: number | null;
+  };
+  repeatCustomerRate: number;
+};
+
+export type AnalyticsTrendPoint = {
+  date: string;
+  views: number;
+  contacts: number;
+  searchAppearances: number;
+};
+
+export type AnalyticsChannelBreakdown = {
+  channel: ContactChannel;
+  count: number;
+  percentage: number;
+};
+
+export type AnalyticsRatingDistribution = {
+  rating: number;
+  count: number;
+  percentage: number;
+};
+
+export type AnalyticsPeakHour = {
+  hour: number;
+  dayOfWeek: number;
+  count: number;
+};
+
+export type AnalyticsInteractionsByStatus = {
+  status: InteractionStatus;
+  count: number;
 };

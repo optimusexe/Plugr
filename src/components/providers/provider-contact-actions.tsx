@@ -14,6 +14,17 @@ async function trackInteraction(providerId: string, channel: "call" | "whatsapp"
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ providerId, channel }),
   });
+  fetch("/api/provider/analytics/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ providerId, eventType: "contact_click", metadata: { channel } }),
+  }).catch(() => undefined);
+  // Increment contact count (fire-and-forget)
+  fetch("/api/provider/track-contact", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ providerId }),
+  }).catch(() => undefined);
 }
 
 function formatPhoneForWhatsApp(phone: string): string {

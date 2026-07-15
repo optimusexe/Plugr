@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authenticateUser } from "@/lib/auth-store";
-import { getProfileByUserId } from "@/lib/profile-store";
+import { getProfileByUserId, updateProfileLastActive } from "@/lib/profile-store";
 import { logApiError, resolveApiError } from "@/lib/api-error";
 
 export async function POST(request: Request) {
@@ -20,6 +20,9 @@ export async function POST(request: Request) {
         { status: 403 }
       );
     }
+
+    // Update last active timestamp (fire-and-forget)
+    updateProfileLastActive(user.id).catch(() => undefined);
 
     return NextResponse.json({
       userId: user.id,

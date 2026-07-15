@@ -59,6 +59,18 @@ export function getRankingRecencyDays(): number {
   return envInt("RANK_RECENCY_DAYS", 30);
 }
 
+export function getRankingWeightEngagement(): number {
+  const raw = process.env.RANK_WEIGHT_ENGAGEMENT ?? "0.8";
+  const v = Number(raw);
+  return Number.isFinite(v) ? v : 0.8;
+}
+
+export function getRankingWeightFreshness(): number {
+  const raw = process.env.RANK_WEIGHT_FRESHNESS ?? "0.6";
+  const v = Number(raw);
+  return Number.isFinite(v) ? v : 0.6;
+}
+
 export function getPostgresSlowQueryMs(): number {
   return envInt("POSTGRES_SLOW_QUERY_MS", 200);
 }

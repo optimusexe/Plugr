@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { findProviders } from "@/lib/profile-store";
 import { getCached, setCached } from "@/lib/simple-cache";
 import { getCachedAsync, setCachedAsync } from "@/lib/redis-cache";
+import { recordAnalyticsEvent } from "@/lib/analytics-store";
 
 export async function GET(req: Request) {
   try {
@@ -28,6 +29,19 @@ export async function GET(req: Request) {
     const result = await findProviders(q, verifiedOnly, limit, cursorObj as any);
     const payload = { providers: result.providers as any[], nextCursor: result.nextCursor };
     await setCachedAsync(cacheKey, payload, 30000);
+
+    // Track search appearances (fire-and-forget)
+    if (result.providers.length > 0) {
+      Promise.all(
+        result.providers.map((p: any) =>
+          recordAnalyticsEvent({
+            providerId: p.id,
+            eventType: "search_appearance",
+            metadata: q ? { searchQuery: q } : undefined,
+          })
+        )
+      ).catch(() => undefined);
+    }
 
     return NextResponse.json(payload);
   } catch (err: any) {

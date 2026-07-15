@@ -164,6 +164,13 @@ export function AppHeader() {
                 Profile
               </Link>
               <Link
+                href="/dashboard"
+                onClick={() => setMenuOpen(false)}
+                className="block px-4 py-3 text-sm font-medium hover:bg-black/5"
+              >
+                Dashboard
+              </Link>
+              <Link
                 href="/verification"
                 onClick={() => setMenuOpen(false)}
                 className="block px-4 py-3 text-sm font-medium hover:bg-black/5"

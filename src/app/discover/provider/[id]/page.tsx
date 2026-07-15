@@ -7,13 +7,14 @@ import { AppHeader } from "@/components/app-header";
 import { DirectionsPanel } from "@/components/maps/directions-panel";
 import { ProviderContactActions } from "@/components/providers/provider-contact-actions";
 import { ProviderReviews } from "@/components/providers/provider-reviews";
-import { getProfileById } from "@/lib/profile-store";
+import { getProfileById, incrementProfileViews } from "@/lib/profile-store";
 import { formatCredibilityScore } from "@/lib/credibility-colors";
 import { BreadcrumbSchema, WebPageSchema } from "@/lib/json-ld";
 import {
   getProviderSeoDescription,
   getProviderSeoTitle,
 } from "@/lib/provider-seo";
+import { recordAnalyticsEvent } from "@/lib/analytics-store";
 
 type ProviderProfilePageProps = {
   params: Promise<{ id: string }>;
@@ -81,6 +82,17 @@ export default async function ProviderProfilePage({ params }: ProviderProfilePag
   if (!provider) {
     notFound();
   }
+
+  // Track profile view (fire-and-forget)
+  recordAnalyticsEvent({
+    providerId: provider.id,
+    eventType: "profile_view",
+    visitorId: userId ?? undefined,
+  }).catch(() => undefined);
+
+  // Increment view count (fire-and-forget)
+  incrementProfileViews(provider.id).catch(() => undefined);
+
   const isOwnProfile = provider.userId === userId;
   const showComposer = Boolean(userId) && !isOwnProfile;
 

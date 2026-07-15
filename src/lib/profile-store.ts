@@ -1,5 +1,5 @@
 import { execute, query } from "@/lib/azure/postgres";
-import { getRankingWeightVerified, getRankingWeightCredibility, getRankingWeightRelevance, getRankingRecencyDays } from "@/lib/azure/config";
+import { getRankingWeightVerified, getRankingWeightCredibility, getRankingWeightRelevance, getRankingRecencyDays, getRankingWeightEngagement, getRankingWeightFreshness } from "@/lib/azure/config";
 import { runMigrationsAtStartup } from "@/lib/azure/config";
 import type { ProfileMode, ProfileProduct, RegisterPayload, StudentProfile, VerificationStatus } from "@/lib/types";
 
@@ -11,6 +11,20 @@ type Metrics = {
 };
 
 let profilesTableReady: Promise<void> | null = null;
+let rankingColumnsEnsured: boolean | null = null;
+
+async function hasRankingColumns(): Promise<boolean> {
+  if (rankingColumnsEnsured !== null) return rankingColumnsEnsured;
+  try {
+    const result = await query<{ column_name: string }>(
+      `SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'last_active_at' LIMIT 1`
+    );
+    rankingColumnsEnsured = result.rows.length > 0;
+  } catch {
+    rankingColumnsEnsured = false;
+  }
+  return rankingColumnsEnsured;
+}
 
 function makeId(): string {
   return `p_${Math.random().toString(36).slice(2, 10)}`;
@@ -56,6 +70,9 @@ type ProfileRow = {
   mode: ProfileMode;
   verification_status: "pending" | "verified";
   credibility: number;
+  last_active_at: string | Date | null;
+  view_count: number;
+  contact_count: number;
   created_at: string | Date;
   updated_at: string | Date;
 };
@@ -102,6 +119,9 @@ function mapProfileRow(row: ProfileRow): StudentProfile {
     mode: row.mode,
     verificationStatus: row.verification_status,
     credibility: typeof row.credibility === "number" ? row.credibility : Number(row.credibility) || 0,
+    lastActiveAt: row.last_active_at ? new Date(row.last_active_at).toISOString() : undefined,
+    viewCount: typeof row.view_count === "number" ? row.view_count : Number(row.view_count) || 0,
+    contactCount: typeof row.contact_count === "number" ? row.contact_count : Number(row.contact_count) || 0,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
   };
@@ -110,60 +130,58 @@ function mapProfileRow(row: ProfileRow): StudentProfile {
 async function ensureProfilesTable(): Promise<void> {
   if (!profilesTableReady) {
     profilesTableReady = (async () => {
-      // If migrations are managed externally, skip runtime DDL.
-      if (!runMigrationsAtStartup()) {
-        return;
-      }
-      await execute(`
-        create table if not exists profiles (
-          id text primary key,
-          user_id text not null unique,
-          profile_image text null,
-          products jsonb null,
-          full_name text not null,
-          faculty text not null,
-          department text not null,
-          level text not null,
-          phone text not null,
-          email text null,
-          location_text text not null,
-          map_link text null,
-          primary_skill text null,
-          bio text null,
-          mode text not null,
-          verification_status text not null default 'pending',
-          credibility numeric not null default 0,
-          created_at timestamptz not null default now(),
-          updated_at timestamptz not null default now()
-        );
-      `);
+      // If migrations are managed externally, skip CREATE TABLE/INDEX but still add new columns.
+      if (runMigrationsAtStartup()) {
+        await execute(`
+          create table if not exists profiles (
+            id text primary key,
+            user_id text not null unique,
+            profile_image text null,
+            products jsonb null,
+            full_name text not null,
+            faculty text not null,
+            department text not null,
+            level text not null,
+            phone text not null,
+            email text null,
+            location_text text not null,
+            map_link text null,
+            primary_skill text null,
+            bio text null,
+            mode text not null,
+            verification_status text not null default 'pending',
+            credibility numeric not null default 0,
+            last_active_at timestamptz null,
+            view_count integer not null default 0,
+            contact_count integer not null default 0,
+            created_at timestamptz not null default now(),
+            updated_at timestamptz not null default now()
+          );
+        `);
 
-      // Create indexes where possible. Some managed Postgres (Azure) may not allow pg_trgm extension;
-      // attempt trigram/index creation but ignore permission errors so runtime flows are not blocked.
-      try {
-        await execute(`create index if not exists profiles_mode_idx on profiles(mode)`);
-        await execute(`create index if not exists profiles_verification_idx on profiles(verification_status)`);
-        await execute(`create index if not exists profiles_updated_at_idx on profiles(updated_at desc)`);
+        try {
+          await execute(`create index if not exists profiles_mode_idx on profiles(mode)`);
+          await execute(`create index if not exists profiles_verification_idx on profiles(verification_status)`);
+          await execute(`create index if not exists profiles_updated_at_idx on profiles(updated_at desc)`);
           await execute(`create index if not exists profiles_discover_default_idx on profiles(verification_status desc, credibility desc, updated_at desc, id desc) where mode in ('provider','both')`);
-        // Trigram/indexes - may fail on managed hosts without extension privileges
-        try {
-          await execute(`create index if not exists profiles_fullname_trgm on profiles using gin (full_name gin_trgm_ops)`);
-          await execute(`create index if not exists profiles_primaryskill_trgm on profiles using gin (primary_skill gin_trgm_ops)`);
-          await execute(`create index if not exists profiles_search_tsv on profiles using gin (to_tsvector('english', coalesce(full_name,'') || ' ' || coalesce(primary_skill,'')))`);
-        } catch (innerErr: any) {
-          const msg = String(innerErr?.message || innerErr);
-          // Ignore extension/permission errors (Azure: 0A000) but log for diagnostics
-          if (/pg_trgm|extension .* not allow-listed|0A000/i.test(msg)) {
-            console.warn("pg_trgm not available or not permitted; skipping trigram indexes");
-          } else {
-            throw innerErr;
+          await execute(`create index if not exists profiles_last_active_at_idx on profiles(last_active_at desc)`);
+          try {
+            await execute(`create index if not exists profiles_fullname_trgm on profiles using gin (full_name gin_trgm_ops)`);
+            await execute(`create index if not exists profiles_primaryskill_trgm on profiles using gin (primary_skill gin_trgm_ops)`);
+            await execute(`create index if not exists profiles_search_tsv on profiles using gin (to_tsvector('english', coalesce(full_name,'') || ' ' || coalesce(primary_skill,'')))`);
+          } catch (innerErr: any) {
+            const msg = String(innerErr?.message || innerErr);
+            if (/pg_trgm|extension .* not allow-listed|0A000/i.test(msg)) {
+              console.warn("pg_trgm not available or not permitted; skipping trigram indexes");
+            } else {
+              throw innerErr;
+            }
           }
+        } catch (err) {
+          try {
+            console.warn("profiles index creation warning:", err);
+          } catch {}
         }
-      } catch (err) {
-        // Log unexpected index creation errors but don't prevent table readiness in most cases.
-        try {
-          console.warn("profiles index creation warning:", err);
-        } catch {}
       }
     })().catch((error) => {
       profilesTableReady = null;
@@ -209,9 +227,11 @@ async function upsertProfileIntoDb(profile: StudentProfile): Promise<StudentProf
   const result = await query<ProfileRow>(
     `insert into profiles (
       id, user_id, profile_image, products, full_name, faculty, department, level, phone, email,
-      location_text, map_link, primary_skill, bio, mode, verification_status, credibility, created_at, updated_at
+      location_text, map_link, primary_skill, bio, mode, verification_status, credibility,
+      last_active_at, view_count, contact_count, created_at, updated_at
     ) values (
-      $1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18::timestamptz, $19::timestamptz
+      $1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+      $18::timestamptz, $19, $20, $21::timestamptz, $22::timestamptz
     ) on conflict (user_id) do update set
       profile_image = excluded.profile_image,
       products = excluded.products,
@@ -228,6 +248,9 @@ async function upsertProfileIntoDb(profile: StudentProfile): Promise<StudentProf
       mode = excluded.mode,
       verification_status = excluded.verification_status,
       credibility = excluded.credibility,
+      last_active_at = excluded.last_active_at,
+      view_count = excluded.view_count,
+      contact_count = excluded.contact_count,
       updated_at = excluded.updated_at
     returning *`,
     [
@@ -248,6 +271,9 @@ async function upsertProfileIntoDb(profile: StudentProfile): Promise<StudentProf
       profile.mode,
       profile.verificationStatus,
       profile.credibility,
+      profile.lastActiveAt ?? new Date().toISOString(),
+      profile.viewCount,
+      profile.contactCount,
       profile.createdAt,
       profile.updatedAt,
     ],
@@ -280,6 +306,9 @@ export async function registerProfile(payload: RegisterPayload): Promise<Student
     mode: payload.mode,
     verificationStatus: "pending",
     credibility: 0,
+    lastActiveAt: now,
+    viewCount: 0,
+    contactCount: 0,
     createdAt: now,
     updatedAt: now,
   };
@@ -412,8 +441,7 @@ export type ProvidersPage = { providers: StudentProfile[]; nextCursor?: string }
 
 type DiscoverDefaultCursor = {
   kind: "default";
-  verificationStatus: "verified" | "pending";
-  credibility: number;
+  score: number;
   updatedAt: string;
   id: string;
 };
@@ -450,6 +478,23 @@ async function findProvidersDefault(
   limit: number,
   cursor?: DiscoverDefaultCursor,
 ): Promise<ProvidersPage> {
+  await ensureProfilesTable();
+
+  const columnsExist = await hasRankingColumns();
+  if (columnsExist) {
+    try {
+      return await findProvidersDefaultScored(verifiedOnly, limit, cursor);
+    } catch (err: any) {
+      const msg = String(err?.message || err);
+      if (/does not exist/i.test(msg)) {
+        rankingColumnsEnsured = false;
+      } else {
+        console.warn("findProvidersDefault: scored query failed, using fallback:", msg);
+      }
+    }
+  }
+
+  // Fallback: simple column sort (works even if new columns don't exist)
   const whereParts: string[] = ["mode in ('provider','both')"];
   const params: unknown[] = [];
 
@@ -459,10 +504,13 @@ async function findProvidersDefault(
 
   let cursorClause = "";
   if (cursor) {
-    params.push(cursor.verificationStatus, cursor.credibility, cursor.updatedAt, cursor.id);
+    params.push(cursor.score, cursor.updatedAt, cursor.id);
+    const scoreIdx = params.length - 2;
+    const updatedIdx = params.length - 1;
+    const idIdx = params.length;
     cursorClause = `AND (
-      verification_status < $1
-      OR (verification_status = $1 AND (credibility < $2 OR (credibility = $2 AND (updated_at < $3 OR (updated_at = $3 AND id < $4)))))
+      credibility < $${scoreIdx}
+      OR (credibility = $${scoreIdx} AND (updated_at < $${updatedIdx} OR (updated_at = $${updatedIdx} AND id < $${idIdx})))
     )`;
   }
 
@@ -470,7 +518,9 @@ async function findProvidersDefault(
   const limitParamIndex = params.length;
 
   const finalSql = `
-    SELECT id, user_id, profile_image, products, full_name, faculty, department, level, phone, email, location_text, map_link, primary_skill, bio, mode, verification_status, credibility, created_at, updated_at
+    SELECT id, user_id, profile_image, products, full_name, faculty, department, level, phone, email,
+           location_text, map_link, primary_skill, bio, mode, verification_status, credibility,
+           created_at, updated_at
     FROM profiles
     WHERE ${whereParts.join(" AND ")}
     ${cursorClause}
@@ -488,8 +538,84 @@ async function findProvidersDefault(
       nextCursor = Buffer.from(
         JSON.stringify({
           kind: "default",
-          verificationStatus: last.verification_status,
-          credibility: Number(last.credibility ?? 0),
+          score: Number(last.credibility ?? 0),
+          updatedAt: new Date(last.updated_at).toISOString(),
+          id: last.id,
+        }),
+      ).toString("base64");
+    } catch {}
+  }
+
+  return { providers: mapped, nextCursor };
+}
+
+async function findProvidersDefaultScored(
+  verifiedOnly: boolean,
+  limit: number,
+  cursor?: DiscoverDefaultCursor,
+): Promise<ProvidersPage> {
+  const RECENCY_T = getRankingRecencyDays();
+  const FRESHNESS_T = 60;
+
+  const whereParts: string[] = ["mode in ('provider','both')"];
+  const params: unknown[] = [];
+
+  if (verifiedOnly) {
+    whereParts.push("verification_status = 'verified'");
+  }
+
+  let cursorClause = "";
+  if (cursor) {
+    params.push(cursor.score, cursor.updatedAt, cursor.id);
+    const scoreIdx = params.length - 2;
+    const updatedIdx = params.length - 1;
+    const idIdx = params.length;
+    cursorClause = `AND (
+      score < $${scoreIdx}
+      OR (score = $${scoreIdx} AND (updated_at < $${updatedIdx} OR (updated_at = $${updatedIdx} AND id < $${idIdx})))
+    )`;
+  }
+
+  params.push(limit);
+  const limitParamIndex = params.length;
+
+  const scoredCte = `WITH scored AS (
+    SELECT id, user_id, profile_image, products, full_name, faculty, department,
+           level, phone, email, location_text, map_link, primary_skill, bio,
+           mode, verification_status, credibility, last_active_at, view_count,
+           contact_count, created_at, updated_at,
+           (
+             (case when verification_status = 'verified' then 1 else 0 end) * ${getRankingWeightVerified()}
+             + (coalesce(credibility, 0) / 100.0) * ${getRankingWeightCredibility()}
+             + exp(-(extract(epoch from (now() - coalesce(last_active_at, updated_at))) / 86400.0) / ${RECENCY_T})
+             + (
+                 least(coalesce(view_count, 0) / 100.0, 1.0) * 0.5
+                 + least(coalesce(contact_count, 0) / 20.0, 1.0) * 0.5
+               ) * ${getRankingWeightEngagement()}
+             + exp(-(extract(epoch from (now() - updated_at)) / 86400.0) / ${FRESHNESS_T}) * ${getRankingWeightFreshness()}
+           ) AS score
+    FROM profiles
+    WHERE ${whereParts.join(" AND ")}
+  )`;
+
+  const finalSql = `${scoredCte}
+    SELECT * FROM scored
+    ${cursorClause}
+    ORDER BY score DESC, updated_at DESC, id DESC
+    LIMIT $${limitParamIndex}
+  `;
+
+  const rows = await query<any>(finalSql, params);
+  const mapped = rows.rows.map(mapProfileRow);
+
+  let nextCursor: string | undefined = undefined;
+  if (rows.rows.length === limit) {
+    const last = rows.rows[rows.rows.length - 1];
+    try {
+      nextCursor = Buffer.from(
+        JSON.stringify({
+          kind: "default",
+          score: Number(last.score),
           updatedAt: new Date(last.updated_at).toISOString(),
           id: last.id,
         }),
@@ -567,6 +693,21 @@ async function findProvidersSearch(
   }
 
   return { providers: mapped, nextCursor };
+}
+
+export async function incrementProfileViews(profileId: string): Promise<void> {
+  await ensureProfilesTable();
+  await execute(`UPDATE profiles SET view_count = view_count + 1 WHERE id = $1`, [profileId]);
+}
+
+export async function incrementProfileContacts(profileId: string): Promise<void> {
+  await ensureProfilesTable();
+  await execute(`UPDATE profiles SET contact_count = contact_count + 1 WHERE id = $1`, [profileId]);
+}
+
+export async function updateProfileLastActive(userId: string): Promise<void> {
+  await ensureProfilesTable();
+  await execute(`UPDATE profiles SET last_active_at = now() WHERE user_id = $1`, [userId]);
 }
 
 export async function getMetrics(): Promise<Metrics> {
