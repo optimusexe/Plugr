@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Instrument_Sans, Instrument_Serif } from "next/font/google";
+import { OrganizationSchema } from "@/lib/json-ld";
 import "./globals.css";
 
 const display = Instrument_Serif({
@@ -72,6 +73,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${display.variable} ${body.variable} pt-24`}>
+        <OrganizationSchema />
         {children}
       </body>
     </html>

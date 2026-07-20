@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { getNotificationsForUser } from "@/lib/notification-store";
+
+export const metadata: Metadata = {
+  title: "Notifications - Plugr",
+  robots: { index: false, follow: false },
+};
 
 export default async function NotificationsPage() {
   const userId = (await cookies()).get("plugr_user_id")?.value;

@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getProfileByUserId } from "@/lib/profile-store";
 import { AppHeader } from "@/components/app-header";
 import { AnalyticsShell } from "@/components/dashboard/analytics-shell";
+
+export const metadata: Metadata = {
+  title: "Provider Dashboard - Plugr",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function DashboardPage() {
   const userId = (await cookies()).get("plugr_user_id")?.value;

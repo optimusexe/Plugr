@@ -3,12 +3,15 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { HeroMockup } from "@/components/hero-mockup";
-import { OrganizationSchema, BreadcrumbSchema } from "@/lib/json-ld";
+import { BreadcrumbSchema, WebSiteSchema, FAQSchema } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "Plugr - Campus Talent Map | Find & Connect with Students Fast",
   description:
     "Discover verified LASU students with trusted skills. Search by expertise, see credibility scores, and connect directly. The campus talent marketplace built for quick hiring and fast service.",
+  alternates: {
+    canonical: "https://useplugr.app",
+  },
   openGraph: {
     title: "Plugr - Campus Talent Map",
     description:
@@ -157,7 +160,8 @@ const faqs = [
 export default function Home() {
   return (
     <>
-      <OrganizationSchema />
+      <WebSiteSchema />
+      {FAQSchema(faqs)}
       {BreadcrumbSchema([
         { name: "Home", url: "https://useplugr.app" },
         { name: "Discover", url: "https://useplugr.app/discover" },

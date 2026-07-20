@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: "Discover Providers - Plugr | Find Skilled Students on Campus",
   description:
     "Search and discover verified LASU students offering services. Filter by skill, faculty, verification status, and credibility. Connect with trusted professionals on campus.",
+  alternates: {
+    canonical: "https://useplugr.app/discover",
+  },
   openGraph: {
     title: "Discover Providers - Plugr",
     description:
@@ -41,7 +44,7 @@ export default async function DiscoverPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
             Discovery
           </p>
-          <h1 className="mt-2 font-display text-3xl font-bold">
+          <h1 className="mt-2 font-display text-4xl font-bold">
             Find the right student fast
           </h1>
           <p className="mt-2 text-sm text-[var(--muted)]">Who said your side hustle can&apos;t thrive alongside your studies?</p>

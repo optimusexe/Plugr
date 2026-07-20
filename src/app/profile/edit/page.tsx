@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { AppHeader } from "@/components/app-header";
 import { ProfileEditForm } from "@/components/workflows/profile-edit-form";
+
+export const metadata: Metadata = {
+  title: "Edit Profile - Plugr",
+  robots: { index: false, follow: false },
+};
 
 export default function ProfileEditPage() {
   return (

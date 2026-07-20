@@ -9,7 +9,7 @@ import { ProviderContactActions } from "@/components/providers/provider-contact-
 import { ProviderReviews } from "@/components/providers/provider-reviews";
 import { getProfileById, incrementProfileViews } from "@/lib/profile-store";
 import { formatCredibilityScore } from "@/lib/credibility-colors";
-import { BreadcrumbSchema, WebPageSchema } from "@/lib/json-ld";
+import { BreadcrumbSchema, WebPageSchema, PersonSchema } from "@/lib/json-ld";
 import {
   getProviderSeoDescription,
   getProviderSeoTitle,
@@ -101,7 +101,14 @@ export default async function ProviderProfilePage({ params }: ProviderProfilePag
 
   return (
     <>
-      {WebPageSchema(getProviderSeoTitle(provider), getProviderSeoDescription(provider))}
+      {WebPageSchema(getProviderSeoTitle(provider), getProviderSeoDescription(provider), `https://useplugr.app/discover/provider/${provider.id}`)}
+      <PersonSchema
+        name={provider.fullName}
+        description={getProviderSeoDescription(provider)}
+        url={`https://useplugr.app/discover/provider/${provider.id}`}
+        image={provider.profileImage ?? undefined}
+        jobTitle={provider.primarySkill ?? undefined}
+      />
       {BreadcrumbSchema([
         { name: "Home", url: "https://useplugr.app" },
         { name: "Discover", url: "https://useplugr.app/discover" },

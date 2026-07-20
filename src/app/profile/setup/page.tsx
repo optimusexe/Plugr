@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
 import { AppHeader } from "@/components/app-header";
 import { ProfileSetupWorkflow } from "@/components/workflows/profile-setup-workflow";
+
+export const metadata: Metadata = {
+  title: "Profile Setup - Plugr",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function ProfileSetupPage() {
   return (

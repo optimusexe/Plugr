@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
+import { AppHeader } from "@/components/app-header";
 import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
 import { HelpCenterHub } from "@/components/help/help-center-hub";
 import { LiveChatWidget } from "@/components/support/live-chat-widget";
-import { BreadcrumbSchema } from "@/lib/json-ld";
+import { BreadcrumbSchema, FAQSchema } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "Help Center - Plugr | Get Support & Answers",
   description:
     "Get help with Plugr. Find answers to common questions, learn how to use the platform, and contact our support team. We're here to help!",
+  alternates: {
+    canonical: "https://useplugr.app/help",
+  },
   openGraph: {
     title: "Help Center - Plugr",
     description: "Get help with Plugr. Find answers and connect with our support team.",
@@ -148,12 +151,13 @@ const supportLinks = [
 export default function HelpCenterPage() {
   return (
     <>
+      {FAQSchema(helpFaqs.map((f) => ({ question: f.question, answer: f.answer })))}
       {BreadcrumbSchema([
         { name: "Home", url: "https://useplugr.app" },
         { name: "Help Center", url: "https://useplugr.app/help" },
       ])}
       <main className="page-shell px-5 pt-4 sm:px-8 lg:px-16">
-      <SiteHeader current="/help" variant="default" />
+      <AppHeader />
       <HelpCenterHub guides={helpTopics} faqs={helpFaqs} supportLinks={supportLinks} />
       <LiveChatWidget />
       <SiteFooter />

@@ -514,7 +514,8 @@ async function findProvidersDefault(
     )`;
   }
 
-  params.push(limit);
+  const fetchLimit = Math.min(limit * 3, 60);
+  params.push(fetchLimit);
   const limitParamIndex = params.length;
 
   const finalSql = `
@@ -529,24 +530,26 @@ async function findProvidersDefault(
   `;
 
   const rows = await query<any>(finalSql, params);
-  const mapped = rows.rows.map(mapProfileRow);
+  const allMapped = rows.rows.map(mapProfileRow);
 
   let nextCursor: string | undefined = undefined;
-  if (rows.rows.length === limit) {
-    const last = rows.rows[rows.rows.length - 1];
+  if (rows.rows.length >= limit) {
+    const lastRaw = rows.rows[rows.rows.length - 1];
     try {
       nextCursor = Buffer.from(
         JSON.stringify({
           kind: "default",
-          score: Number(last.credibility ?? 0),
-          updatedAt: new Date(last.updated_at).toISOString(),
-          id: last.id,
+          score: Number(lastRaw.credibility ?? 0),
+          updatedAt: new Date(lastRaw.updated_at).toISOString(),
+          id: lastRaw.id,
         }),
       ).toString("base64");
     } catch {}
   }
 
-  return { providers: mapped, nextCursor };
+  const diversified = diversifyBySkill(allMapped, limit);
+
+  return { providers: diversified, nextCursor };
 }
 
 async function findProvidersDefaultScored(
@@ -576,7 +579,9 @@ async function findProvidersDefaultScored(
     )`;
   }
 
-  params.push(limit);
+  // Fetch extra rows to give the diversity layer enough material
+  const fetchLimit = Math.min(limit * 3, 60);
+  params.push(fetchLimit);
   const limitParamIndex = params.length;
 
   const scoredCte = `WITH scored AS (
@@ -606,24 +611,87 @@ async function findProvidersDefaultScored(
   `;
 
   const rows = await query<any>(finalSql, params);
-  const mapped = rows.rows.map(mapProfileRow);
+  const allMapped = rows.rows.map(mapProfileRow);
 
+  // Build cursor from the raw scored order (before diversity) for correct pagination
   let nextCursor: string | undefined = undefined;
-  if (rows.rows.length === limit) {
-    const last = rows.rows[rows.rows.length - 1];
+  if (rows.rows.length >= limit) {
+    const lastRaw = rows.rows[rows.rows.length - 1];
     try {
       nextCursor = Buffer.from(
         JSON.stringify({
           kind: "default",
-          score: Number(last.score),
-          updatedAt: new Date(last.updated_at).toISOString(),
-          id: last.id,
+          score: Number(lastRaw.score),
+          updatedAt: new Date(lastRaw.updated_at).toISOString(),
+          id: lastRaw.id,
         }),
       ).toString("base64");
     } catch {}
   }
 
-  return { providers: mapped, nextCursor };
+  // Apply diversity: interleave skills so no more than 2 of the same in a row
+  const diversified = diversifyBySkill(allMapped, limit);
+
+  return { providers: diversified, nextCursor };
+}
+
+function diversifyBySkill(rows: StudentProfile[], limit: number): StudentProfile[] {
+  if (rows.length <= 2) return rows.slice(0, limit);
+
+  const queues = new Map<string, StudentProfile[]>();
+  for (const row of rows) {
+    const skill = (row.primarySkill ?? "other").trim().toLowerCase();
+    const q = queues.get(skill);
+    if (q) {
+      q.push(row);
+    } else {
+      queues.set(skill, [row]);
+    }
+  }
+
+  const skillKeys = Array.from(queues.keys());
+  if (skillKeys.length <= 1) return rows.slice(0, limit);
+
+  const result: StudentProfile[] = [];
+  let round = 0;
+
+  while (result.length < limit) {
+    let added = false;
+    for (const key of skillKeys) {
+      const q = queues.get(key)!;
+      const item = q[round];
+      if (!item) continue;
+
+      const lastSkill = result.length > 0
+        ? (result[result.length - 1].primarySkill ?? "other").trim().toLowerCase()
+        : "";
+      if (key === lastSkill && result.length >= 2) {
+        const prevSkill = result.length >= 2
+          ? (result[result.length - 2].primarySkill ?? "other").trim().toLowerCase()
+          : "";
+        if (key === prevSkill) continue;
+      }
+
+      result.push(item);
+      added = true;
+      if (result.length >= limit) break;
+    }
+    if (!added) break;
+    round++;
+  }
+
+  if (result.length < limit) {
+    const seen = new Set(result.map((r) => r.id));
+    for (const row of rows) {
+      if (result.length >= limit) break;
+      if (!seen.has(row.id)) {
+        result.push(row);
+        seen.add(row.id);
+      }
+    }
+  }
+
+  return result;
 }
 
 async function findProvidersSearch(

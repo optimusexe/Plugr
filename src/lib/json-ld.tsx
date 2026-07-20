@@ -27,6 +27,25 @@ export function OrganizationSchema() {
   return JsonLd(schema);
 }
 
+export function WebSiteSchema() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Plugr",
+    url: "https://useplugr.app",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: "https://useplugr.app/discover?q={search_term_string}",
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  return JsonLd(schema);
+}
+
 export function BreadcrumbSchema(items: { name: string; url: string }[]) {
   const schema = {
     "@context": "https://schema.org",
@@ -38,6 +57,57 @@ export function BreadcrumbSchema(items: { name: string; url: string }[]) {
       item: item.url,
     })),
   };
+
+  return JsonLd(schema);
+}
+
+export function FAQSchema(items: { question: string; answer: string }[]) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+
+  return JsonLd(schema);
+}
+
+export function PersonSchema({
+  name,
+  description,
+  url,
+  image,
+  jobTitle,
+  sameAs,
+}: {
+  name: string;
+  description: string;
+  url: string;
+  image?: string;
+  jobTitle?: string;
+  sameAs?: string[];
+}) {
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name,
+    description,
+    url,
+    worksFor: {
+      "@type": "Organization",
+      name: "Plugr",
+      url: "https://useplugr.app",
+    },
+  };
+  if (image) schema.image = image;
+  if (jobTitle) schema.jobTitle = jobTitle;
+  if (sameAs?.length) schema.sameAs = sameAs;
 
   return JsonLd(schema);
 }
@@ -64,13 +134,13 @@ export function LocalBusinessSchema() {
   return JsonLd(schema);
 }
 
-export function WebPageSchema(title: string, description: string) {
+export function WebPageSchema(title: string, description: string, url?: string) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: title,
     description: description,
-    url: "https://useplugr.app",
+    url: url ?? "https://useplugr.app",
     publisher: {
       "@type": "Organization",
       name: "Plugr",

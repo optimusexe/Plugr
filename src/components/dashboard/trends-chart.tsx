@@ -35,7 +35,7 @@ export function TrendsChart({ data }: { data: AnalyticsTrendPoint[] }) {
         />
         <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
         <Tooltip
-          labelFormatter={(v: string) => {
+          labelFormatter={(v) => {
             const d = new Date(v);
             return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
           }}

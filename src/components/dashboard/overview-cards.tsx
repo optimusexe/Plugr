@@ -3,12 +3,14 @@
 import type { AnalyticsOverview } from "@/lib/types";
 
 function TrendIndicator({ value }: { value: number }) {
-  if (value === 0) return <span className="text-xs text-[var(--muted)]">--</span>;
+  if (value === 0) return <span className="text-xs text-[var(--muted)]">No change</span>;
   const isPositive = value > 0;
   return (
-    <span className={`text-xs font-semibold ${isPositive ? "text-emerald-600" : "text-red-500"}`}>
-      {isPositive ? "+" : ""}
-      {value}%
+    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${isPositive ? "text-emerald-600" : "text-red-500"}`}>
+      <svg className={`h-3 w-3 ${isPositive ? "" : "rotate-180"}`} viewBox="0 0 12 12" fill="currentColor">
+        <path d="M6 2l4 5H2z" />
+      </svg>
+      {isPositive ? "+" : ""}{value}% vs last period
     </span>
   );
 }
@@ -36,6 +38,8 @@ function MetricCard({ label, value, trend, info }: { label: string; value: strin
       </div>
       <div className="mt-2 flex items-baseline gap-2">
         <p className="text-3xl font-semibold">{value}</p>
+      </div>
+      <div className="mt-1">
         <TrendIndicator value={trend} />
       </div>
     </article>

@@ -1,4 +1,5 @@
 import { MetadataRoute } from "next";
+import { query } from "@/lib/azure/postgres";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://useplugr.app";
@@ -23,24 +24,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/register`,
+      url: `${baseUrl}/legal/privacy`,
       lastModified: new Date(),
-      changeFrequency: "never",
-      priority: 0.8,
+      changeFrequency: "yearly",
+      priority: 0.3,
     },
     {
-      url: `${baseUrl}/login`,
+      url: `${baseUrl}/legal/terms`,
       lastModified: new Date(),
-      changeFrequency: "never",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/profile/setup`,
-      lastModified: new Date(),
-      changeFrequency: "never",
-      priority: 0.6,
+      changeFrequency: "yearly",
+      priority: 0.3,
     },
   ];
 
-  return staticPages;
+  let providerPages: MetadataRoute.Sitemap = [];
+  try {
+    const result = await query<{ id: string; updated_at: Date }>(
+      `SELECT id, updated_at FROM student_profiles WHERE id IS NOT NULL ORDER BY updated_at DESC LIMIT 500`
+    );
+    providerPages = result.rows.map((row) => ({
+      url: `${baseUrl}/discover/provider/${row.id}`,
+      lastModified: new Date(row.updated_at),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    }));
+  } catch {
+    // If query fails, just return static pages
+  }
+
+  return [...staticPages, ...providerPages];
 }

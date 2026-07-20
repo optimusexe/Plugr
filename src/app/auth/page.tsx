@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AuthRegisterFlow } from "@/components/workflows/auth-register-flow";
 import { AuthLoginForm } from "@/components/workflows/auth-login-form";
+
+export const metadata: Metadata = {
+  title: "Sign Up / Login - Plugr",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type AuthPageProps = {
   searchParams: Promise<{ mode?: string }>;

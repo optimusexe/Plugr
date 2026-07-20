@@ -7,6 +7,7 @@ import { getVerificationProgress } from "@/lib/verification-store";
 export const metadata = {
   title: "Verification Checklist - Plugr",
   description: "Complete your verification to build trust in the Plugr community",
+  robots: { index: false as const, follow: false as const },
 };
 
 async function getVerificationData(userId: string) {
