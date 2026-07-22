@@ -11,6 +11,12 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "*.blob.core.windows.net" },
+      { protocol: "https", hostname: "plugr.vercel.app" },
+    ],
+  },
   async headers() {
     return [
       {

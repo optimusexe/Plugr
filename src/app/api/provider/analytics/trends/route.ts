@@ -21,7 +21,9 @@ export async function GET(request: Request) {
     }
 
     const trends = await getViewsTrend(profile.id, clampedDays);
-    return NextResponse.json({ trends });
+    return NextResponse.json({ trends }, {
+      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
+    });
   } catch (error) {
     const resolved = resolveApiError(error, { defaultMessage: "Unable to load analytics trends." });
     logApiError("api/provider/analytics/trends/GET", resolved, error);

@@ -310,6 +310,29 @@ export function ProfileEditForm() {
     });
   }
 
+  async function uploadImageToBlob(dataUrl: string, type: "profile" | "product"): Promise<string> {
+    if (!dataUrl.startsWith("data:")) {
+      return dataUrl;
+    }
+
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const file = new File([blob], `image-${Date.now()}.webp`, { type: blob.type });
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", type);
+
+    const response = await fetch("/api/upload/image", { method: "POST", body: formData });
+    const data = (await response.json()) as { url?: string; error?: string };
+
+    if (!response.ok || !data.url) {
+      throw new Error(data.error || "Failed to upload image.");
+    }
+
+    return data.url;
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form || !userId) {
@@ -323,9 +346,30 @@ export function ProfileEditForm() {
     const resolvedSkill = form.primarySkill === "Other" ? form.otherSkill.trim() : form.primarySkill;
 
     try {
+      let profileImageUrl = form.profileImage || undefined;
+      if (profileImageUrl && profileImageUrl.startsWith("data:")) {
+        profileImageUrl = await uploadImageToBlob(profileImageUrl, "profile");
+      }
+
+      const productsWithUploadedImages = await Promise.all(
+        form.products.filter((product) => product.name.trim()).map(async (product) => {
+          let imageUrl = product.image || undefined;
+          if (imageUrl && imageUrl.startsWith("data:")) {
+            imageUrl = await uploadImageToBlob(imageUrl, "product");
+          }
+          return {
+            ...product,
+            name: product.name.trim(),
+            price: product.price?.trim() || undefined,
+            description: product.description?.trim() || undefined,
+            image: imageUrl,
+          };
+        }),
+      );
+
       const payload = {
         userId,
-        profileImage: form.profileImage || undefined,
+        profileImage: profileImageUrl,
         fullName: form.fullName,
         faculty: form.faculty,
         department: form.department,
@@ -336,13 +380,7 @@ export function ProfileEditForm() {
         primarySkill: resolvedSkill,
         bio: form.bio,
         mode: form.mode,
-        products: form.products.filter((product) => product.name.trim()).map((product) => ({
-          ...product,
-          name: product.name.trim(),
-          price: product.price?.trim() || undefined,
-          description: product.description?.trim() || undefined,
-          image: product.image || undefined,
-        })),
+        products: productsWithUploadedImages,
       };
 
       const response = await fetch("/api/profile", {

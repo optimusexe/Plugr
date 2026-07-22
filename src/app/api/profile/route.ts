@@ -29,7 +29,9 @@ export async function GET(request: Request) {
     }
 
     const [profile, user] = await Promise.all([getProfileByUserId(userId), getUserById(userId)]);
-    return NextResponse.json({ profile, user: user ? { isAdmin: user.isAdmin } : null });
+    return NextResponse.json({ profile, user: user ? { isAdmin: user.isAdmin } : null }, {
+      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
+    });
   } catch (error) {
     const resolved = resolveApiError(error, { defaultMessage: "Unable to load profile." });
     logApiError("api/profile/GET", resolved, error);

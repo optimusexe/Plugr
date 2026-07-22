@@ -231,6 +231,33 @@ export function DiscoverWorkflow({ initialProviders }: DiscoverWorkflowProps) {
 /* ─── Original feed (simplified, no search logic) ─── */
 
 function FeedProviders({ providers, loading, hasMore, loadingMore, onLoadMore }: { providers: StudentProfile[]; loading: boolean; hasMore: boolean; loadingMore: boolean; onLoadMore: () => void }) {
+  const trackedRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    if (providers.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const id = entry.target.getAttribute("data-provider-id");
+          if (!id || trackedRef.current.has(id)) continue;
+          trackedRef.current.add(id);
+          fetch("/api/provider/analytics/track", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ providerId: id, eventType: "search_appearance" }),
+          }).catch(() => undefined);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    const cards = document.querySelectorAll("[data-provider-id]");
+    cards.forEach((card) => observer.observe(card));
+
+    return () => observer.disconnect();
+  }, [providers]);
   if (loading) {
     return (
       <div className="space-y-4">
@@ -285,7 +312,7 @@ function FeedProviders({ providers, loading, hasMore, loadingMore, onLoadMore }:
   return (
     <div className="space-y-4">
       {providers.map((provider) => (
-        <article key={provider.id} className="glass-card rounded-2xl p-5">
+        <article key={provider.id} data-provider-id={provider.id} className="glass-card rounded-2xl p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               {provider.profileImage ? (
@@ -294,11 +321,11 @@ function FeedProviders({ providers, loading, hasMore, loadingMore, onLoadMore }:
                   alt={`${provider.fullName} profile`}
                   width={52}
                   height={52}
-                  unoptimized
-                  className="h-13 w-13 rounded-full object-cover"
+                  loading="lazy"
+                  className="h-13 w-13 rounded-2xl object-cover"
                 />
               ) : (
-                <div className="flex h-13 w-13 items-center justify-center rounded-full bg-[var(--accent)] text-sm font-semibold text-white">
+                <div className="flex h-13 w-13 items-center justify-center rounded-2xl bg-[var(--accent)] text-sm font-semibold text-white">
                   {initialsFromName(provider.fullName)}
                 </div>
               )}
@@ -514,14 +541,14 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                     className="flex items-center gap-3 rounded-xl border border-black/10 p-4 transition hover:border-black/20"
                   >
                     {provider.profileImage ? (
-                      <Image
-                        src={provider.profileImage}
-                        alt={`${provider.fullName} profile`}
-                        width={44}
-                        height={44}
-                        unoptimized
-                        className="h-11 w-11 rounded-full object-cover"
-                      />
+                    <Image
+                      src={provider.profileImage}
+                      alt={`${provider.fullName} profile`}
+                      width={44}
+                      height={44}
+                      loading="lazy"
+                      className="h-11 w-11 rounded-full object-cover"
+                    />
                     ) : (
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-sm font-semibold text-white">
                         {initialsFromName(provider.fullName)}

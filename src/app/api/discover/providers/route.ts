@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { findProviders } from "@/lib/profile-store";
-import { getCached, setCached } from "@/lib/simple-cache";
 import { getCachedAsync, setCachedAsync } from "@/lib/redis-cache";
-import { recordAnalyticsEvent } from "@/lib/analytics-store";
 
 export async function GET(req: Request) {
   try {
@@ -30,20 +28,9 @@ export async function GET(req: Request) {
     const payload = { providers: result.providers as any[], nextCursor: result.nextCursor };
     await setCachedAsync(cacheKey, payload, 30000);
 
-    // Track search appearances (fire-and-forget)
-    if (result.providers.length > 0) {
-      Promise.all(
-        result.providers.map((p: any) =>
-          recordAnalyticsEvent({
-            providerId: p.id,
-            eventType: "search_appearance",
-            metadata: q ? { searchQuery: q } : undefined,
-          })
-        )
-      ).catch(() => undefined);
-    }
-
-    return NextResponse.json(payload);
+    return NextResponse.json(payload, {
+      headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" },
+    });
   } catch (err: any) {
     console.error("/api/discover/providers error", err);
     return NextResponse.json({ error: String(err?.message || err) }, { status: 500 });

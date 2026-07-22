@@ -18,7 +18,9 @@ export async function GET(request: Request) {
     }
 
     const interactions = await getConsumerInteractionsForProvider(consumerId, providerId);
-    return NextResponse.json({ interactions });
+    return NextResponse.json({ interactions }, {
+      headers: { "Cache-Control": "private, max-age=15, stale-while-revalidate=30" },
+    });
   } catch (error) {
     const resolved = resolveApiError(error, { defaultMessage: "Unable to load interactions." });
     logApiError("api/interactions/GET", resolved, error);

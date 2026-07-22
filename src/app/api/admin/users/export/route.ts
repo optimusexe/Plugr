@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCurrentAdminUser } from "@/lib/admin-auth";
 import { getUsers } from "@/lib/auth-store";
+import { getProfiles } from "@/lib/profile-store";
+import * as XLSX from "xlsx";
 
 function escapeCsv(value: unknown): string {
   const text = value === null || value === undefined ? "" : String(value);
@@ -52,6 +54,33 @@ export async function GET(request: Request) {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": `attachment; filename="plugr-users-full.csv"`,
+      },
+    });
+  }
+
+  if (format === "spreadsheet") {
+    const profiles = await getProfiles();
+    const profilesByUserId = new Map(profiles.map((p) => [p.userId, p]));
+
+    const data = users.map((user) => {
+      const profile = profilesByUserId.get(user.id);
+      return {
+        "User": user.fullName,
+        "Email": user.email,
+        "Phone": profile?.phone ?? "",
+        "Verified Badge": profile?.verificationStatus === "verified" ? "Yes" : "No",
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    return new NextResponse(buffer, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="plugr-users.xlsx"`,
       },
     });
   }

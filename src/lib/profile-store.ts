@@ -199,8 +199,10 @@ async function readProfilesFromDb(limit = 20, offset = 0): Promise<StudentProfil
   // Avoid selecting large JSON columns (products) unless needed.
   const result = await query<ProfileRow>(
     `select
-       id, user_id, profile_image, full_name, primary_skill,
-       mode, verification_status, credibility, created_at, updated_at
+       id, user_id, profile_image, full_name, faculty, department, level,
+       phone, email, location_text, map_link, primary_skill, bio,
+       mode, verification_status, credibility, last_active_at,
+       view_count, contact_count, created_at, updated_at
      from profiles
      order by updated_at desc
      limit $1 offset $2`,

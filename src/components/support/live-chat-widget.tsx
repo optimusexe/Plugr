@@ -122,7 +122,7 @@ export function LiveChatWidget() {
 
     const interval = window.setInterval(() => {
       void loadConversation(controller.signal, false);
-    }, 4000);
+    }, 10000);
 
     return () => {
       controller.abort();

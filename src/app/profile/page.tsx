@@ -76,7 +76,6 @@ export default async function ProfilePage() {
               alt="Profile picture"
               width={88}
               height={88}
-              unoptimized
               className="h-22 w-22 rounded-full object-cover"
             />
           ) : (
@@ -166,7 +165,7 @@ export default async function ProfilePage() {
                         alt={product.name}
                         width={640}
                         height={360}
-                        unoptimized
+                        loading="lazy"
                         className="h-36 w-full object-cover"
                       />
                     ) : (

@@ -21,7 +21,9 @@ export async function GET(request: Request) {
     }
 
     const overview = await getAnalyticsOverview(profile.id, clampedPeriod);
-    return NextResponse.json({ overview });
+    return NextResponse.json({ overview }, {
+      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
+    });
   } catch (error) {
     const resolved = resolveApiError(error, { defaultMessage: "Unable to load analytics overview." });
     logApiError("api/provider/analytics/overview/GET", resolved, error);

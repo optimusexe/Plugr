@@ -130,7 +130,6 @@ export default async function ProviderProfilePage({ params }: ProviderProfilePag
               alt={`${provider.fullName} profile`}
               width={96}
               height={96}
-              unoptimized
               className="h-24 w-24 rounded-full object-cover"
             />
           ) : (
@@ -215,7 +214,7 @@ export default async function ProviderProfilePage({ params }: ProviderProfilePag
                         alt={product.name}
                         width={640}
                         height={360}
-                        unoptimized
+                        loading="lazy"
                         className="h-36 w-full object-cover"
                       />
                     ) : (

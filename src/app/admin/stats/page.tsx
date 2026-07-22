@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getUsers } from "@/lib/auth-store";
 import { getProfiles } from "@/lib/profile-store";
 import { getAdminOverview } from "@/lib/admin-store";
+import { ActiveUsersCard } from "@/components/admin/active-users-card";
 
 function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
@@ -22,11 +23,9 @@ export default async function AdminStatsPage() {
         </p>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {[
           { label: "Total users", value: formatNumber(overview.totalUsers) },
-          { label: "Admin accounts", value: formatNumber(overview.adminCount) },
-          { label: "Email verified", value: formatNumber(overview.verifiedAccounts) },
           { label: "Badge verified", value: formatNumber(overview.badgeApprovedProfiles) },
           { label: "Pending badges", value: formatNumber(overview.pendingBadgeProfiles) },
           { label: "Provider rate", value: `${overview.metrics.verifiedProviderRate}%` },
@@ -38,6 +37,7 @@ export default async function AdminStatsPage() {
             <p className="mt-2 text-3xl font-semibold">{item.value}</p>
           </article>
         ))}
+        <ActiveUsersCard />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">

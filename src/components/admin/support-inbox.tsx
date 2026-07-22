@@ -87,7 +87,7 @@ export function SupportInbox() {
 
     const interval = window.setInterval(() => {
       void loadInbox(controller.signal);
-    }, 5000);
+    }, 15000);
 
     return () => {
       controller.abort();
@@ -106,7 +106,7 @@ export function SupportInbox() {
 
     const interval = window.setInterval(() => {
       void loadThread(selectedConversation.conversation.id, controller.signal);
-    }, 3500);
+    }, 10000);
 
     return () => {
       controller.abort();

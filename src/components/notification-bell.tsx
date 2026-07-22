@@ -72,7 +72,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
     }
 
     loadNotifications();
-    const interval = window.setInterval(loadNotifications, 30000);
+    const interval = window.setInterval(loadNotifications, 120000);
     return () => window.clearInterval(interval);
   }, [userId]);
 

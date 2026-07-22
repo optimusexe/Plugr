@@ -5,7 +5,9 @@ import { logApiError, resolveApiError } from "@/lib/api-error";
 export async function GET() {
   try {
     const metrics = await getMetrics();
-    return NextResponse.json({ metrics });
+    return NextResponse.json({ metrics }, {
+      headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600" },
+    });
   } catch (error) {
     const resolved = resolveApiError(error, { defaultMessage: "Unable to load metrics." });
     logApiError("api/metrics", resolved, error);

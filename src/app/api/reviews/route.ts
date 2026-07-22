@@ -45,6 +45,8 @@ export async function GET(request: Request) {
       reviews: reviewsWithReviewer,
       canReview: false,
       reviewableInteractionId: null,
+    }, {
+      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
     });
   }
 
@@ -82,6 +84,8 @@ export async function GET(request: Request) {
     reviews: reviewsWithReviewer,
     canReview: Boolean(reviewableInteractionId),
     reviewableInteractionId,
+  }, {
+    headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
   });
 }
 

@@ -30,6 +30,12 @@ export default async function AdminUsersPage() {
             >
               Export full users CSV
             </a>
+            <a
+              href="/api/admin/users/export?format=spreadsheet"
+              className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            >
+              Export spreadsheet
+            </a>
           </div>
         </div>
       </header>

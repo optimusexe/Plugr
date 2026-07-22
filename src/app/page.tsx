@@ -5,6 +5,8 @@ import { SiteHeader } from "@/components/site-header";
 import { HeroMockup } from "@/components/hero-mockup";
 import { BreadcrumbSchema, WebSiteSchema, FAQSchema } from "@/lib/json-ld";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Plugr - Campus Talent Map | Find & Connect with Students Fast",
   description:

@@ -17,7 +17,9 @@ export async function GET(request: Request) {
       getUnreadNotificationCount(userId),
     ]);
 
-    return NextResponse.json({ notifications, unreadCount });
+    return NextResponse.json({ notifications, unreadCount }, {
+      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
+    });
   } catch (error) {
     const resolved = resolveApiError(error, {
       defaultMessage: "Unable to load notifications.",

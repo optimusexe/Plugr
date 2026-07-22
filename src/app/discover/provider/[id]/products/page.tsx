@@ -104,7 +104,7 @@ export default async function ProviderProductsPage({ params }: ProviderProductsP
                       alt={product.name}
                       width={800}
                       height={450}
-                      unoptimized
+
                       className="h-44 w-full object-cover"
                     />
                   ) : (

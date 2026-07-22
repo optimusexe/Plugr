@@ -35,7 +35,9 @@ export async function GET(request: Request) {
       getInteractionsByStatus(profile.id),
     ]);
 
-    return NextResponse.json({ channels, ratings, peakHours, byStatus });
+    return NextResponse.json({ channels, ratings, peakHours, byStatus }, {
+      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
+    });
   } catch (error) {
     const resolved = resolveApiError(error, { defaultMessage: "Unable to load analytics interactions." });
     logApiError("api/provider/analytics/interactions/GET", resolved, error);

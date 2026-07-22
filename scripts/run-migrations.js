@@ -175,6 +175,81 @@ async function run() {
       console.warn('Analytics index creation warning:', e.message || e);
     }
 
+    // Migrate base64 images to Azure Blob Storage
+    try {
+      const { BlobServiceClient } = require('@azure/storage-blob');
+      const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_STORAGE_CONNECTION_STRING;
+      
+      if (AZURE_STORAGE_CONNECTION_STRING) {
+        const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
+        const profileContainer = blobServiceClient.getContainerClient('plugr-profile-images');
+        const productContainer = blobServiceClient.getContainerClient('plugr-product-images');
+        await profileContainer.createIfNotExists();
+        await productContainer.createIfNotExists();
+
+        async function uploadBase64ToBlob(dataUrl, userId, type) {
+          if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl;
+          
+          const matches = dataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+          if (!matches) return dataUrl;
+
+          const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+          const base64Data = matches[2];
+          const buffer = Buffer.from(base64Data, 'base64');
+          const blobName = `${userId}/migrated-${Date.now()}.${ext}`;
+          const containerName = type === 'profile' ? profileContainer : productContainer;
+          const blockBlobClient = containerName.getBlockBlobClient(blobName);
+          
+          await blockBlobClient.uploadData(buffer, {
+            blobHTTPHeaders: { blobContentType: `image/${matches[1]}` }
+          });
+          
+          return blockBlobClient.url;
+        }
+
+        // Migrate profile images
+        const profileResult = await client.query(
+          "SELECT id, user_id, profile_image FROM profiles WHERE profile_image LIKE 'data:image%'"
+        );
+        console.log(`Found ${profileResult.rows.length} profiles with base64 images to migrate.`);
+        
+        for (const row of profileResult.rows) {
+          const url = await uploadBase64ToBlob(row.profile_image, row.user_id, 'profile');
+          await client.query('UPDATE profiles SET profile_image = $1 WHERE id = $2', [url, row.id]);
+          console.log(`Migrated profile image for user ${row.user_id}`);
+        }
+
+        // Migrate product images
+        const productResult = await client.query(
+          "SELECT id, user_id, products FROM profiles WHERE products::text LIKE '%data:image%'"
+        );
+        console.log(`Found ${productResult.rows.length} profiles with base64 product images to migrate.`);
+        
+        for (const row of productResult.rows) {
+          const products = row.products || [];
+          let updated = false;
+          
+          for (let i = 0; i < products.length; i++) {
+            if (products[i].image && products[i].image.startsWith('data:')) {
+              products[i].image = await uploadBase64ToBlob(products[i].image, row.user_id, 'product');
+              updated = true;
+            }
+          }
+          
+          if (updated) {
+            await client.query('UPDATE profiles SET products = $1 WHERE id = $2', [JSON.stringify(products), row.id]);
+            console.log(`Migrated product images for user ${row.user_id}`);
+          }
+        }
+
+        console.log('Base64 image migration complete.');
+      } else {
+        console.log('Skipping base64 image migration: AZURE_STORAGE_CONNECTION_STRING not set.');
+      }
+    } catch (e) {
+      console.warn('Base64 image migration failed:', e.message || e);
+    }
+
     console.log('Migrations complete.');
   } finally {
     client.release();
