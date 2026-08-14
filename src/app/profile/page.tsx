@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { AppHeader } from "@/components/app-header";
 import { ProviderReviews } from "@/components/providers/provider-reviews";
 import { getProfileByUserId } from "@/lib/profile-store";
+import { getProductsByProvider } from "@/lib/product-store";
 import { getUserById } from "@/lib/auth-store";
 import { formatCredibilityScore } from "@/lib/credibility-colors";
 
@@ -51,6 +52,8 @@ export default async function ProfilePage() {
   const displayEmail = profile.email || user?.email || "Not provided";
   const isVerified = profile.verificationStatus === "verified";
 
+  const storeProducts = await getProductsByProvider(profile.id, 50);
+
   return (
     <main className="page-shell px-5 pb-8 sm:px-8 lg:px-16">
       <AppHeader />
@@ -87,9 +90,10 @@ export default async function ProfilePage() {
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-xl font-semibold">{profile.fullName}</h2>
               {isVerified ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent)]/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">
-                  <span aria-hidden="true">✓</span>
-                  Verified
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 shadow-md" title="Verified">
+                  <svg className="h-4 w-4 fill-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                  </svg>
                 </span>
               ) : null}
             </div>
@@ -153,35 +157,55 @@ export default async function ProfilePage() {
         </article>
 
         <article className="mt-3 rounded-xl border border-black/10 bg-white p-4">
-          <p className="text-xs uppercase tracking-[0.14em] text-[var(--muted)]">Products</p>
-          {profile.products && profile.products.length > 0 ? (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs uppercase tracking-[0.14em] text-[var(--muted)]">Store products ({storeProducts.length})</p>
+            <Link
+              href="/stores/manage"
+              className="text-xs font-semibold text-[var(--accent)] hover:underline"
+            >
+              Manage store
+            </Link>
+          </div>
+          {storeProducts.length > 0 ? (
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {profile.products.map((product) => (
-                <div key={product.id} className="rounded-lg border border-black/10 bg-[var(--card)] p-3">
-                  <div className="mb-2 overflow-hidden rounded-md border border-black/10 bg-white">
-                    {product.image ? (
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        width={640}
-                        height={360}
-                        loading="lazy"
-                        className="h-36 w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-36 w-full items-center justify-center text-xs text-[var(--muted)]">
-                        No product image
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-sm font-semibold">{product.name}</p>
-                  {product.price ? <p className="text-xs text-[var(--muted)]">Price: {product.price}</p> : null}
-                  {product.description ? <p className="mt-1 text-xs text-[var(--muted)]">{product.description}</p> : null}
-                </div>
-              ))}
+              {storeProducts.slice(0, 6).map((product) => {
+                const image = product.imageUrls[0];
+                return (
+                  <Link
+                    key={product.id}
+                    href={`/p/${product.id}`}
+                    className="rounded-lg border border-black/10 bg-[var(--card)] p-3 transition hover:border-black/25"
+                  >
+                    <div className="mb-2 overflow-hidden rounded-md border border-black/10 bg-white">
+                      {image ? (
+                        <Image
+                          src={image}
+                          alt={product.name}
+                          width={640}
+                          height={360}
+                          loading="lazy"
+                          className="h-36 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-36 w-full items-center justify-center bg-[var(--accent)] text-sm font-semibold text-white">
+                          {product.name.split(" ").filter(Boolean).slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold">{product.name}</p>
+                    {product.price ? <p className="text-xs text-[var(--muted)]">{product.price}</p> : null}
+                    {product.description ? <p className="mt-1 text-xs text-[var(--muted)]">{product.description}</p> : null}
+                  </Link>
+                );
+              })}
             </div>
           ) : (
-            <p className="mt-1 text-sm font-semibold">No products uploaded yet.</p>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              No products yet.{" "}
+              <Link href="/stores/manage" className="font-semibold text-[var(--accent)] hover:underline">
+                Add products to your store
+              </Link>
+            </p>
           )}
         </article>
 

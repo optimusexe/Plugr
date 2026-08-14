@@ -157,6 +157,84 @@ async function run() {
       console.warn('Index creation warning:', e.message || e);
     }
 
+    // Plugr Stores - products table
+    await client.query(`create table if not exists products (
+      id text primary key,
+      provider_id text not null,
+      provider_user_id text not null,
+      name text not null,
+      description text null,
+      price text null,
+      category text null,
+      image_urls jsonb not null default '[]',
+      view_count integer not null default 0,
+      click_count integer not null default 0,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now()
+    )`);
+
+    try {
+      await client.query("create index if not exists products_provider_idx on products(provider_id)");
+      await client.query("create index if not exists products_category_idx on products(category)");
+      await client.query("create index if not exists products_created_at_idx on products(created_at desc)");
+    } catch (e) {
+      console.warn('Products index creation warning:', e.message || e);
+    }
+
+    // Migrate legacy JSONB products (profiles.products) into the products table.
+    try {
+      const legacyResult = await client.query(
+        "SELECT id, user_id, products FROM profiles WHERE products IS NOT NULL AND jsonb_array_length(products) > 0"
+      );
+      console.log(`Found ${legacyResult.rows.length} profiles with legacy JSONB products to migrate.`);
+      for (const row of legacyResult.rows) {
+        const products = row.products || [];
+        for (const product of products) {
+          if (!product || typeof product !== 'object') continue;
+          const id = product.id || `prd_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+          const name = String(product.name || '').trim();
+          if (!name) continue;
+          const image = product.image ? String(product.image).trim() : '';
+          const imageUrls = image ? JSON.stringify([image]) : '[]';
+          await client.query(
+            `insert into products (id, provider_id, provider_user_id, name, description, price, category, image_urls, view_count, click_count, created_at, updated_at)
+             values ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, 0, 0, now(), now())
+             on conflict (id) do nothing`,
+            [id, row.id, row.user_id, name, product.description ? String(product.description) : null, product.price ? String(product.price) : null, null, imageUrls]
+          );
+        }
+      }
+      if (legacyResult.rows.length > 0) {
+        console.log('Legacy JSONB products migrated to products table.');
+      }
+    } catch (e) {
+      console.warn('Legacy products migration failed:', e.message || e);
+    }
+
+    // Plugr Stores - stores table
+    await client.query(`create table if not exists stores (
+      id text primary key,
+      provider_id text not null,
+      provider_user_id text not null,
+      slug text not null unique,
+      name text not null,
+      tagline text null,
+      description text null,
+      banner_url text null,
+      logo_url text null,
+      whatsapp text null,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now()
+    )`);
+
+    try {
+      await client.query("create index if not exists stores_provider_idx on stores(provider_id)");
+      await client.query("create index if not exists stores_updated_at_idx on stores(updated_at desc)");
+      await client.query("alter table stores add column if not exists logo_url text null");
+    } catch (e) {
+      console.warn('Stores index creation warning:', e.message || e);
+    }
+
     // Analytics events table
     await client.query(`create table if not exists analytics_events (
       id text primary key,

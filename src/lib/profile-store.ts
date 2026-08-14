@@ -468,11 +468,35 @@ export async function findProviders(
   const q = search ? search.trim() : "";
   const hasQuery = q.length > 0;
 
-  if (!hasQuery) {
-    return findProvidersDefault(verifiedOnly, limit, cursor?.kind === "default" ? cursor : undefined);
+  const page = !hasQuery
+    ? await findProvidersDefault(verifiedOnly, limit, cursor?.kind === "default" ? cursor : undefined)
+    : await findProvidersSearch(q, verifiedOnly, limit, cursor?.kind === "search" ? cursor : undefined);
+
+  if (page.providers.length > 0) {
+    const enriched = await enrichProvidersWithStore(page.providers);
+    page.providers = enriched;
   }
 
-  return findProvidersSearch(q, verifiedOnly, limit, cursor?.kind === "search" ? cursor : undefined);
+  return page;
+}
+
+async function enrichProvidersWithStore(providers: StudentProfile[]): Promise<StudentProfile[]> {
+  const ids = providers.map((p) => p.id);
+  try {
+    const result = await query<{ provider_id: string; slug: string; name: string }>(
+      `select provider_id, slug, name from stores where provider_id = any($1)`,
+      [ids],
+    );
+    const byProvider = new Map(result.rows.map((row) => [row.provider_id, row]));
+    return providers.map((provider) => {
+      const store = byProvider.get(provider.id);
+      return store
+        ? { ...provider, storeSlug: store.slug, storeName: store.name }
+        : provider;
+    });
+  } catch {
+    return providers;
+  }
 }
 
 async function findProvidersDefault(

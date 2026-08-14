@@ -2,6 +2,7 @@ import { execute, query } from "@/lib/azure/postgres";
 import { getReviewsByProvider } from "@/lib/review-store";
 import { getProfileById } from "@/lib/profile-store";
 import { computeProfileSetupScore, computeVerificationScore, computeReviewPoints } from "@/lib/credibility";
+import { getStoreByProviderId } from "@/lib/store-store";
 import { getCachedAsync, setCachedAsync } from "@/lib/redis-cache";
 import type {
   AnalyticsEvent,
@@ -273,6 +274,7 @@ export async function getAnalyticsOverview(providerId: string, periodDays: numbe
     repeatCustomerRate,
     profile,
     reviews,
+    store,
   ] = await Promise.all([
     getProfileViews(providerId, since),
     getContactClicks(providerId, since),
@@ -285,6 +287,7 @@ export async function getAnalyticsOverview(providerId: string, periodDays: numbe
     getRepeatCustomerRate(providerId),
     getProfileById(providerId),
     getReviewsByProvider(providerId),
+    getStoreByProviderId(providerId).catch(() => null),
   ]);
 
   function calcTrend(current: number, prior: number): number {
@@ -324,9 +327,9 @@ export async function getAnalyticsOverview(providerId: string, periodDays: numbe
       trend: calcTrend(averageRating ?? 0, priorAverageRating ?? 0),
     },
     totalReviews,
-    credibilityScore: {
+      credibilityScore: {
       total: profile?.credibility ?? 0,
-      profileSetup: computeProfileSetupScore(profile),
+      profileSetup: computeProfileSetupScore(profile, Boolean(store)),
       verification: computeVerificationScore(profile),
       reviews: computeReviewPoints(reviews),
     },

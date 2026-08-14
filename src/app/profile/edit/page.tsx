@@ -15,7 +15,7 @@ export default function ProfileEditPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Profile</p>
         <h1 className="mt-2 font-[var(--font-display)] text-3xl font-bold">Edit profile</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
-          Update your details, upload products, and save when you are done.
+          Update your details and save when you are done. Manage your store and products from the Stores page.
         </p>
         <div className="mt-6">
           <ProfileEditForm />

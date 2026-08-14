@@ -10,6 +10,45 @@ export type ProfileProduct = {
   image?: string;
 };
 
+export type StoreProduct = {
+  id: string;
+  providerId: string;
+  providerUserId: string;
+  name: string;
+  description?: string;
+  price?: string;
+  category?: string;
+  imageUrls: string[];
+  viewCount: number;
+  clickCount: number;
+  createdAt: string;
+  updatedAt: string;
+  storeName?: string;
+  storeSlug?: string;
+};
+
+export type Store = {
+  id: string;
+  providerId: string;
+  providerUserId: string;
+  slug: string;
+  name: string;
+  tagline?: string;
+  description?: string;
+  bannerUrl?: string;
+  logoUrl?: string;
+  whatsapp?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StoreWithStats = Store & {
+  productCount: number;
+  providerName?: string;
+  providerImage?: string;
+  providerVerified?: boolean;
+};
+
 export type StudentProfile = {
   id: string;
   userId: string;
@@ -31,6 +70,8 @@ export type StudentProfile = {
   lastActiveAt?: string;
   viewCount: number;
   contactCount: number;
+  storeSlug?: string;
+  storeName?: string;
   createdAt: string;
   updatedAt: string;
 };

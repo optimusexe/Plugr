@@ -82,11 +82,11 @@ export const helpArticles: HelpArticle[] = [
       {
         heading: "Start exploring Discover",
         content:
-          "Once your profile is complete, open the Discover tab. This is where you browse other students by skill, credibility, and verification status. You can search by faculty, department, or specific skill name. Tap any profile to see their full details, reviews, and products. If you are in Provider or Both mode, other students can find and contact you the same way.",
+          "Once your profile is complete, open the Discover tab. This is where you browse other students by skill, credibility, and verification status. You can search by faculty, department, or specific skill name. Tap any profile to see their full details, reviews, and store. If you are in Provider or Both mode, other students can find and contact you the same way.",
         steps: [
           "Open the Discover tab from the main navigation.",
           "Use the search bar to filter by skill name, faculty, or department.",
-          "Tap a provider's card to view their full profile, reviews, and products.",
+          "Tap a provider's card to view their full profile, reviews, and store.",
           "Use the Contact button to reach out directly via the channel they have listed.",
         ],
       },
@@ -147,15 +147,14 @@ export const helpArticles: HelpArticle[] = [
         ],
       },
       {
-        heading: "Products and services",
+        heading: "Launching your store",
         content:
-          "Adding products or services to your profile gives you more surface area in search results and helps students understand exactly what you offer. Each product can have its own image, name, price, and description. Think of these as mini portfolio pieces that showcase your range.",
+          "As a verified provider, you can launch your own store on Plugr. Your store has its own page where you list products and services with images, prices, and descriptions \u2014 and it earns you 5 credibility points. Think of it as a dedicated storefront that showcases your range and makes it easy for students to browse and buy.",
         steps: [
-          "Go to your profile and tap Edit.",
-          "Switch to the Products tab.",
-          "Tap Add product and fill in the name, price (optional), and a short description.",
-          "Upload a product image. Real photos of your work perform better than generic images.",
-          "Add at least 3\u20135 products to give visitors a clear picture of your capabilities.",
+          "Complete your profile and get verified. Only verified providers can launch a store.",
+          "Open Stores and tap Set up your store. Give it a name, tagline, and description.",
+          "Add products and services with real photos, prices, and short descriptions.",
+          "Share your store link \u2014 shoppers can browse it at /stores/your-store-name.",
         ],
         bestPractices: [
           "Use real photos of work you have actually done. Screenshots of past projects, photos of physical products, or mockups of designs all work.",
@@ -175,12 +174,12 @@ export const helpArticles: HelpArticle[] = [
         steps: [
           "Review your profile every 2\u20134 weeks to make sure all details are accurate.",
           "Update your location if your schedule or campus area has changed.",
-          "Add new products or remove ones you no longer offer.",
+          "Add new products to your store or remove ones you no longer offer.",
           "Refresh your bio if your skill set or focus has evolved.",
         ],
       },
     ],
-    relatedSlugs: ["getting-started", "credibility"],
+    relatedSlugs: ["profile-setup", "credibility", "stores"],
   },
   {
     slug: "credibility",
@@ -206,11 +205,11 @@ export const helpArticles: HelpArticle[] = [
           "Bio \u2014 5 points. A written introduction explaining your services and reliability.",
           "Primary skill \u2014 4 points. Your main service offering.",
           "Contact (phone or email) \u2014 4 points. An active way for clients to reach you.",
-          "Products \u2014 5 points. At least one product or service listed.",
+          "Store launched \u2014 5 points. Set up your store as a verified provider.",
         ],
         bestPractices: [
           "Complete every field to reach the full 30 points. A half-finished profile caps your maximum score at 50 (30 profile + 20 verification).",
-          "Add at least one product or service. This is worth 5 points and also improves your visibility in Discover.",
+          "Launch your store. It is worth 5 points and gives students a dedicated page to browse and buy from you.",
         ],
         avoid: [
           "Leaving fields blank and expecting a high score. Each missing field costs you specific points.",
@@ -342,7 +341,7 @@ export const helpArticles: HelpArticle[] = [
         ],
       },
     ],
-    relatedSlugs: ["credibility", "profile-setup"],
+    relatedSlugs: ["credibility", "profile-setup", "stores"],
   },
   {
     slug: "discover",
@@ -361,7 +360,7 @@ export const helpArticles: HelpArticle[] = [
           "Use specific skill names for the best results. \u201cWeb Development\u201d will find more relevant providers than \u201ctech.\u201d",
           "Filter by faculty or department if you want someone local to your area.",
           "Check the credibility badge and score on each profile before contacting.",
-          "Tap into a provider\u2019s full profile to see their reviews, products, and contact options.",
+          "Tap into a provider\u2019s full profile to see their reviews, store, and contact options.",
         ],
         bestPractices: [
           "Start with broad searches and narrow down as you see results.",
@@ -383,7 +382,7 @@ export const helpArticles: HelpArticle[] = [
           "Get verified. Verified providers are prioritized in search results.",
           "Keep your profile updated. Profiles that are recently modified tend to rank higher.",
           "Collect positive reviews. Higher credibility scores push you up in the results.",
-          "Add products or services. Profiles with products have more surface area for search matching.",
+          "Launch your store. Verified providers with a store get more surface area for search matching.",
         ],
         bestPractices: [
           "Update your profile every few weeks to signal that you are active and available.",
@@ -402,7 +401,7 @@ export const helpArticles: HelpArticle[] = [
           "When you find someone you want to work with, tap the Contact button on their profile. This opens a direct channel to reach them. Providers list their preferred contact method \u2014 typically phone or the platform\u2019s messaging system. Be clear about what you need, when you need it, and any budget details in your first message.",
         steps: [
           "Open the provider\u2019s full profile from the Discover feed.",
-          "Review their products, reviews, and credibility score.",
+          "Review their products, store, and credibility score.",
           "Tap Contact and choose the available channel.",
           "Send a clear, concise message describing your request.",
         ],
@@ -419,6 +418,108 @@ export const helpArticles: HelpArticle[] = [
       },
     ],
     relatedSlugs: ["profile-setup", "credibility"],
+  },
+  {
+    slug: "stores",
+    title: "Plugr Stores: selling and buying on campus",
+    description: "Launch your store, list products, and buy from verified campus providers via WhatsApp.",
+    icon: "\u{1F6CD}\uFE0F",
+    category: "Stores",
+    intro:
+      "Plugr Stores is the marketplace built into Plugr. Verified providers can launch a dedicated storefront where they list products and services with photos, prices, and descriptions. Students can browse those products, see exactly who is selling them, and place orders directly over WhatsApp. This guide covers everything from setting up your store to buying your first product.",
+    sections: [
+      {
+        heading: "Who can launch a store",
+        content:
+          "Only verified providers can launch a store on Plugr. Verification confirms you are a real LASU student who completed the identity and reliability checklist, which keeps the marketplace trustworthy. If you are not yet verified, complete the verification flow first \u2014 your store unlocks the moment your badge is approved.",
+        steps: [
+          "Complete your profile fully, including your real name, photo, faculty, department, and level.",
+          "Get verified through the verification flow on your profile.",
+          "Once your badge is approved, open the Stores page.",
+        ],
+      },
+      {
+        heading: "Set up your store",
+        content:
+          "Setting up a store takes just a few minutes. You give it a name, a tagline, a description, a banner image, a logo, and a WhatsApp number for orders. The store gets its own public page at /stores/your-store-name, which you can share anywhere.",
+        steps: [
+          "From the Stores page, tap Set up your store.",
+          "Enter a store name (for example, \u201cJem's Kreatives\u201d). You can edit this later.",
+          "Add a tagline and a short description explaining what you sell.",
+          "Upload a wide banner image (1200 \u00d7 300 recommended) and a square logo (512 \u00d7 512 recommended).",
+          "Add your WhatsApp number, or leave it blank to use your profile phone.",
+          "Tap Create store. You will be redirected to your new storefront.",
+        ],
+        bestPractices: [
+          "Choose a store name that is easy to remember and reflects what you sell.",
+          "Use real photos for your banner and logo. Your storefront represents your brand.",
+          "Keep your WhatsApp number up to date so buyers can always reach you.",
+        ],
+        avoid: [
+          "Using someone else's logo or brand imagery as your store logo.",
+          "Leaving the banner or logo blank \u2014 a visual identity builds trust.",
+        ],
+      },
+      {
+        heading: "Adding products and services",
+        content:
+          "Your store comes with a product manager where you add everything you sell. Each product needs a name, a category, a price, a short description, and up to 8 photos. Buyers see your products on your storefront and can buy them with one tap.",
+        steps: [
+          "Open your store manager (Stores \u2192 My store).",
+          "Tap Add product and fill in the name, category, and price.",
+          "Write a one-sentence description explaining what the buyer gets.",
+          "Upload real photos of the product or past work.",
+          "Save the product \u2014 it appears on your storefront immediately.",
+        ],
+        bestPractices: [
+          "Use clear photos of work you have actually done. Screenshots, mockups, and photos of physical products all work.",
+          "Price competitively. Check what similar providers on Plugr charge.",
+          "Update your product list regularly. Remove items you no longer offer.",
+        ],
+        avoid: [
+          "Listing products without images \u2014 visual content gets far more engagement.",
+          "Listing items you cannot actually deliver on. Only showcase work you can reproduce consistently.",
+        ],
+      },
+      {
+        heading: "Buying from a store",
+        content:
+          "Buying is simple. Find a product on the Stores page, open it, and tap Buy Now. Plugr takes you to WhatsApp with a pre-written message to the provider, where you can confirm the order and agree on delivery or pickup. Payments happen off-platform between you and the provider.",
+        steps: [
+          "Browse products on the Stores page or a store's storefront.",
+          "Tap any product to see its full details, photos, and the seller.",
+          "Tap Buy Now to open a WhatsApp chat with the provider.",
+          "Send the message to confirm your order, price, and pickup or delivery.",
+        ],
+        bestPractices: [
+          "Check the provider's profile and credibility score before ordering.",
+          "Confirm the final price and payment method in the WhatsApp chat before committing.",
+          "Agree on a pickup location and time upfront to avoid delays.",
+        ],
+        avoid: [
+          "Sharing sensitive information like passwords or bank PINs with any provider.",
+          "Paying in full before you are sure the provider is reliable.",
+        ],
+      },
+      {
+        heading: "Managing your store",
+        content:
+          "You can edit your store's name, images, and details at any time, and you can delete the store entirely if you no longer want to sell. Deleting a store also removes its products.",
+        steps: [
+          "Open Stores \u2192 My store to manage your products.",
+          "Tap Edit store to update your name, banner, logo, tagline, description, or WhatsApp number.",
+          "Tap Delete store to permanently remove your store and all of its products. This cannot be undone.",
+        ],
+        bestPractices: [
+          "Keep your banner, logo, and product photos fresh so your store looks active.",
+          "Respond quickly to Buy Now messages \u2014 fast responses win orders.",
+        ],
+        avoid: [
+          "Deleting your store if you still have pending orders. Fulfil or cancel them first.",
+        ],
+      },
+    ],
+    relatedSlugs: ["profile-setup", "credibility", "discover"],
   },
   {
     slug: "troubleshooting",
@@ -538,6 +639,12 @@ export const helpFaqs: HelpFaq[] = [
   { question: "Why did my verification badge change to pending?", answer: "Significant profile changes, especially name or photo updates, automatically send your badge back under review. This ensures the verified badge remains trustworthy. During the review period, your badge shows as \u201cPending\u201d until the changes are verified.", tags: ["verification", "badge", "review"] },
   { question: "How do I get found faster in Discover?", answer: "Complete your profile fully, get verified, keep your location current, and build positive reviews over time. The ranking algorithm prioritizes verification status, credibility score, profile recency, and search relevance. Higher credibility and consistent updates improve your position in results.", tags: ["discover", "exposure", "credibility"] },
   { question: "Can I be both a buyer and a provider?", answer: "Yes. Plugr supports Provider, Requester, or Both modes. Select \u201cBoth\u201d if you want to offer services and request them from other students using a single account.", tags: ["account", "mode", "provider"] },
+  { question: "Who can launch a store on Plugr?", answer: "Only verified providers can launch a store. Once your verification badge is approved, you can set up your store from the Stores page \u2014 give it a name, tagline, banner, logo, and WhatsApp number.", tags: ["stores", "store", "seller"] },
+  { question: "How do I set up my store?", answer: "Open the Stores page and tap Set up your store. Enter a store name, tagline, description, upload a banner and logo, and add your WhatsApp number. Your store gets its own public page at /stores/your-store-name.", tags: ["stores", "store", "setup"] },
+  { question: "How do I add products to my store?", answer: "Open Stores \u2192 My store and tap Add product. Enter a name, category, price, description, and up to 8 photos. The product appears on your storefront immediately.", tags: ["stores", "products", "listing"] },
+  { question: "How do I buy a product from a store?", answer: "Open the product and tap Buy Now. Plugr opens a WhatsApp chat with the provider where you confirm the order, price, and pickup or delivery. Payments happen off-platform between you and the provider.", tags: ["stores", "buy", "whatsapp"] },
+  { question: "Can I delete my store?", answer: "Yes. From Stores \u2192 My store, tap Delete store. This permanently removes your store and all of its products. This cannot be undone, so make sure you have no pending orders first.", tags: ["stores", "store", "delete"] },
+  { question: "Do I earn credibility points for my store?", answer: "Yes. Launching your store is part of your profile setup score and is worth 5 credibility points, even before you add any products.", tags: ["stores", "credibility", "points"] },
   { question: "What should I send when reporting a bug?", answer: "Include the page name, what you clicked, what happened, and a screenshot if possible. The more specific you are, the faster support can identify and fix the issue.", tags: ["support", "bug", "troubleshooting"] },
 ];
 

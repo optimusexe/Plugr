@@ -16,9 +16,12 @@ export function mapRatingToPoints(rating: number): number {
  * - bio: 5
  * - primarySkill: 4
  * - contact (phone or email): 4
- * - products (any): 5
+ * - store launched (any): 5
  */
-export function computeProfileSetupScore(profile: StudentProfile | null | undefined): number {
+export function computeProfileSetupScore(
+  profile: StudentProfile | null | undefined,
+  hasStore?: boolean,
+): number {
   if (!profile) return 0;
   let score = 0;
   if (profile.fullName && profile.fullName.trim().length > 0) score += 6;
@@ -26,7 +29,7 @@ export function computeProfileSetupScore(profile: StudentProfile | null | undefi
   if (profile.bio && profile.bio.trim().length > 0) score += 5;
   if (profile.primarySkill && profile.primarySkill.trim().length > 0) score += 4;
   if ((profile.phone && profile.phone.trim().length > 0) || (profile.email && profile.email?.trim().length > 0)) score += 4;
-  if (Array.isArray(profile.products) && profile.products.length > 0) score += 5;
+  if (hasStore) score += 5;
   return Math.round(score * 10) / 10;
 }
 

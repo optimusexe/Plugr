@@ -2,11 +2,13 @@
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { ProfileMode, ProfileProduct, StudentProfile } from "@/lib/types";
 import { formatCredibilityScore } from "@/lib/credibility-colors";
 import CredibilityChecklist from "@/components/profile/credibility-checklist";
 
 type ProfileEditFormState = {
+  id: string;
   profileImage: string;
   fullName: string;
   faculty: string;
@@ -19,11 +21,10 @@ type ProfileEditFormState = {
   otherSkill: string;
   bio: string;
   mode: ProfileMode;
-  products: ProfileProduct[];
   verificationStatus?: "pending" | "verified";
 };
 
-type EditTab = "profile" | "contact" | "products";
+type EditTab = "profile" | "contact";
 
 const FACULTY_OPTIONS = [
   "School of Agriculture",
@@ -102,16 +103,6 @@ const SKILL_OPTIONS = [
   "Other",
 ];
 
-function newProduct(): ProfileProduct {
-  return {
-    id: `prd_${Math.random().toString(36).slice(2, 10)}`,
-    name: "",
-    price: "",
-    description: "",
-    image: "",
-  };
-}
-
 function initialsFromName(name: string): string {
   const parts = name.trim().split(" ").filter(Boolean);
   if (parts.length === 0) {
@@ -180,6 +171,7 @@ export function ProfileEditForm() {
         if (!profileData.profile) {
           setOriginalFullName(userData.user.fullName);
           setForm({
+            id: "",
             profileImage: "",
             fullName: userData.user.fullName,
             faculty: "",
@@ -192,7 +184,6 @@ export function ProfileEditForm() {
             otherSkill: "",
             bio: "",
             mode: "provider",
-            products: [],
             verificationStatus: "pending",
           });
           return;
@@ -202,6 +193,7 @@ export function ProfileEditForm() {
         const matchedSkill = SKILL_OPTIONS.includes(loadedSkill) ? loadedSkill : loadedSkill ? "Other" : "";
 
         setForm({
+          id: profileData.profile.id,
           profileImage: profileData.profile.profileImage || "",
           fullName: profileData.profile.fullName,
           faculty: profileData.profile.faculty,
@@ -214,7 +206,6 @@ export function ProfileEditForm() {
           otherSkill: matchedSkill === "Other" ? loadedSkill : "",
           bio: profileData.profile.bio || "",
           mode: profileData.profile.mode,
-          products: profileData.profile.products || [],
           verificationStatus: profileData.profile.verificationStatus,
         });
         setCredibilityValue(profileData.profile.credibility ?? null);
@@ -258,58 +249,6 @@ export function ProfileEditForm() {
     setForm((prev) => (prev ? { ...prev, profileImage: imageData } : prev));
   }
 
-  async function handleProductImageChange(event: ChangeEvent<HTMLInputElement>, index: number) {
-    const file = event.target.files?.[0];
-    if (!file || !form) {
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      setError("Please upload an image file.");
-      return;
-    }
-
-    setError(null);
-    const imageData = await readImage(file);
-    setForm((prev) => {
-      if (!prev) {
-        return prev;
-      }
-      const nextProducts = prev.products.slice();
-      nextProducts[index] = { ...nextProducts[index], image: imageData };
-      return { ...prev, products: nextProducts };
-    });
-  }
-
-  function updateProduct(index: number, patch: Partial<ProfileProduct>) {
-    setForm((prev) => {
-      if (!prev) {
-        return prev;
-      }
-      const nextProducts = prev.products.slice();
-      nextProducts[index] = { ...nextProducts[index], ...patch };
-      return { ...prev, products: nextProducts };
-    });
-  }
-
-  function removeProduct(index: number) {
-    setForm((prev) => {
-      if (!prev) {
-        return prev;
-      }
-      return { ...prev, products: prev.products.filter((_, idx) => idx !== index) };
-    });
-  }
-
-  function addProduct() {
-    setForm((prev) => {
-      if (!prev) {
-        return prev;
-      }
-      return { ...prev, products: [...prev.products, newProduct()] };
-    });
-  }
-
   async function uploadImageToBlob(dataUrl: string, type: "profile" | "product"): Promise<string> {
     if (!dataUrl.startsWith("data:")) {
       return dataUrl;
@@ -351,22 +290,6 @@ export function ProfileEditForm() {
         profileImageUrl = await uploadImageToBlob(profileImageUrl, "profile");
       }
 
-      const productsWithUploadedImages = await Promise.all(
-        form.products.filter((product) => product.name.trim()).map(async (product) => {
-          let imageUrl = product.image || undefined;
-          if (imageUrl && imageUrl.startsWith("data:")) {
-            imageUrl = await uploadImageToBlob(imageUrl, "product");
-          }
-          return {
-            ...product,
-            name: product.name.trim(),
-            price: product.price?.trim() || undefined,
-            description: product.description?.trim() || undefined,
-            image: imageUrl,
-          };
-        }),
-      );
-
       const payload = {
         userId,
         profileImage: profileImageUrl,
@@ -380,7 +303,7 @@ export function ProfileEditForm() {
         primarySkill: resolvedSkill,
         bio: form.bio,
         mode: form.mode,
-        products: productsWithUploadedImages,
+        products: [] as ProfileProduct[],
       };
 
       const response = await fetch("/api/profile", {
@@ -499,15 +422,6 @@ export function ProfileEditForm() {
             }`}
           >
             Contact
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("products")}
-            className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-              activeTab === "products" ? "bg-[var(--accent)] text-white" : "bg-white text-[var(--ink)]"
-            }`}
-          >
-            Products
           </button>
         </div>
       </div>
@@ -677,73 +591,21 @@ export function ProfileEditForm() {
         </section>
       ) : null}
 
-      {activeTab === "products" ? (
-        <section className="rounded-xl border border-black/10 bg-[var(--card)] p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">Products</p>
-              <p className="text-xs text-[var(--muted)]">Upload products/services you offer.</p>
-            </div>
-            <button type="button" onClick={addProduct} className="rounded-lg border border-black/15 bg-white px-3 py-1.5 text-sm font-semibold">
-              Add product
-            </button>
+      {activeTab === "contact" ? (
+        <section className="flex flex-col items-start gap-3 rounded-xl border border-black/10 bg-[var(--card)] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold">Sell on Plugr Stores</p>
+            <p className="text-sm text-[var(--muted)]">
+              Add products with photos and a price in your dedicated store manager.
+            </p>
           </div>
-
-          <div className="mt-3 space-y-3">
-            {form.products.length === 0 ? <p className="text-sm text-[var(--muted)]">No products added yet.</p> : null}
-            {form.products.map((product, index) => (
-              <div key={product.id} className="rounded-lg border border-black/10 bg-white p-3">
-                <div className="grid gap-3 sm:grid-cols-[80px_1fr]">
-                  <label htmlFor={`product-image-${product.id}`} className="cursor-pointer">
-                    <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border border-black/15 bg-[var(--card)] text-xs text-[var(--muted)]">
-                      {product.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={product.image} alt={product.name || "Product"} className="h-full w-full object-cover" />
-                      ) : (
-                        "Image"
-                      )}
-                    </div>
-                  </label>
-                  <div className="space-y-2">
-                    <input
-                      placeholder="Product name"
-                      value={product.name}
-                      onChange={(event) => updateProduct(index, { name: event.target.value })}
-                      className="w-full rounded-lg border border-black/15 px-3 py-2 text-sm"
-                    />
-                    <input
-                      placeholder="Price (optional)"
-                      value={product.price || ""}
-                      onChange={(event) => updateProduct(index, { price: event.target.value })}
-                      className="w-full rounded-lg border border-black/15 px-3 py-2 text-sm"
-                    />
-                    <textarea
-                      placeholder="Short description"
-                      value={product.description || ""}
-                      onChange={(event) => updateProduct(index, { description: event.target.value })}
-                      className="min-h-20 w-full rounded-lg border border-black/15 px-3 py-2 text-sm"
-                    />
-                  </div>
-                </div>
-                <div className="mt-2 flex items-center justify-between">
-                  <input
-                    id={`product-image-${product.id}`}
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => void handleProductImageChange(event, index)}
-                    className="text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeProduct(index)}
-                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <Link
+            href="/stores/manage"
+            onClick={() => setActiveTab("contact")}
+            className="inline-flex shrink-0 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+          >
+            Manage my store
+          </Link>
         </section>
       ) : null}
 

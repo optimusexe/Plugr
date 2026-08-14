@@ -3,6 +3,7 @@ import type { ProviderReview } from "@/lib/types";
 import { countProviderCompletionSignals, getInteractionById } from "@/lib/interaction-store";
 import { updateProfileCredibility, getProfileById } from "@/lib/profile-store";
 import { mapRatingToPoints, computeProfileSetupScore, computeVerificationScore, computeReviewPoints } from "@/lib/credibility";
+import { getStoreByProviderId } from "@/lib/store-store";
 
 function makeId(): string {
   return `r_${Math.random().toString(36).slice(2, 10)}`;
@@ -111,7 +112,10 @@ export async function recomputeCredibility(providerId: string): Promise<void> {
 
   // fetch profile and compute profile + verification contributions
   const profile = await getProfileById(providerId);
-  const profileScore = computeProfileSetupScore(profile); // max 30
+  const [store] = await Promise.all([
+    getStoreByProviderId(providerId).catch(() => null),
+  ]);
+  const profileScore = computeProfileSetupScore(profile, Boolean(store)); // max 30
   const verificationScore = computeVerificationScore(profile); // 0 or 20
 
   const total = Math.min(100, profileScore + verificationScore + reviewPoints);

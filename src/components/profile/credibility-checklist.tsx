@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { StudentProfile } from "@/lib/types";
 import { computeProfileSetupScore } from "@/lib/credibility";
 
@@ -8,16 +9,40 @@ type Props = {
 };
 
 export default function CredibilityChecklist({ profile }: Props) {
+  const [hasStore, setHasStore] = useState(false);
+
+  useEffect(() => {
+    if (!profile?.id) {
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/stores?provider=${encodeURIComponent(profile.id)}&limit=1`)
+      .then((response) => response.json())
+      .then((data: { stores?: unknown[] }) => {
+        if (!cancelled) {
+          setHasStore(Boolean(data.stores && data.stores.length > 0));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHasStore(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.id]);
+
   const items = [
     { key: 'fullName', label: 'Full name', points: 6, completed: Boolean(profile?.fullName && profile.fullName.trim().length > 0), hint: 'Add your full name.' },
     { key: 'profileImage', label: 'Profile photo', points: 6, completed: Boolean(profile?.profileImage && profile.profileImage.trim().length > 0), hint: 'Upload a clear photo.' },
     { key: 'bio', label: 'Bio', points: 5, completed: Boolean(profile?.bio && profile.bio.trim().length > 0), hint: 'Write a short description of your services.' },
     { key: 'primarySkill', label: 'Primary skill', points: 4, completed: Boolean(profile?.primarySkill && profile.primarySkill.trim().length > 0), hint: 'Select a primary skill.' },
     { key: 'contact', label: 'Contact (phone or email)', points: 4, completed: Boolean((profile?.phone && profile.phone.trim().length > 0) || (profile?.email && profile.email.trim().length > 0)), hint: 'Add phone or email so customers can contact you.' },
-    { key: 'products', label: 'Products / Services', points: 5, completed: Boolean(Array.isArray(profile?.products) && profile!.products!.length > 0), hint: 'Add at least one product or service.' },
+    { key: 'store', label: 'Store launched', points: 5, completed: hasStore, hint: 'Set up your store to start selling.' },
   ];
 
-  const subtotal = computeProfileSetupScore((profile as StudentProfile) ?? null);
+  const subtotal = computeProfileSetupScore((profile as StudentProfile) ?? null, hasStore);
 
   return (
     <div className="rounded-xl border border-black/10 bg-white p-4">

@@ -366,9 +366,14 @@ function FeedProviders({ providers, loading, hasMore, loadingMore, onLoadMore }:
             >
               View profile
             </Link>
-            <span className="rounded-lg border border-black/10 bg-black/5 px-4 py-2 text-sm text-[var(--muted)]">
-              Live location supported in-app
-            </span>
+            {provider.storeSlug ? (
+              <Link
+                href={`/stores/${provider.storeSlug}`}
+                className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              >
+                View store
+              </Link>
+            ) : null}
           </div>
         </article>
       )      )}

@@ -150,3 +150,42 @@ export function WebPageSchema(title: string, description: string, url?: string) 
 
   return JsonLd(schema);
 }
+
+export function ProductSchema({
+  name,
+  description,
+  image,
+  price,
+  url,
+  brand,
+}: {
+  name: string;
+  description?: string;
+  image?: string;
+  price?: string;
+  url: string;
+  brand?: string;
+}) {
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name,
+    url,
+    brand: {
+      "@type": "Brand",
+      name: brand || "Plugr Stores",
+    },
+  };
+  if (description) schema.description = description;
+  if (image) schema.image = image;
+  if (price) {
+    schema.offers = {
+      "@type": "Offer",
+      price,
+      priceCurrency: "NGN",
+      availability: "https://schema.org/InStock",
+    };
+  }
+
+  return JsonLd(schema);
+}

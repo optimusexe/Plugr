@@ -8,6 +8,7 @@ import { DirectionsPanel } from "@/components/maps/directions-panel";
 import { ProviderContactActions } from "@/components/providers/provider-contact-actions";
 import { ProviderReviews } from "@/components/providers/provider-reviews";
 import { getProfileById, incrementProfileViews } from "@/lib/profile-store";
+import { getProductsByProvider } from "@/lib/product-store";
 import { formatCredibilityScore } from "@/lib/credibility-colors";
 import { BreadcrumbSchema, WebPageSchema, PersonSchema } from "@/lib/json-ld";
 import {
@@ -96,8 +97,9 @@ export default async function ProviderProfilePage({ params }: ProviderProfilePag
   const isOwnProfile = provider.userId === userId;
   const showComposer = Boolean(userId) && !isOwnProfile;
 
-  const productsPreview = provider.products ? provider.products.slice(0, 2) : [];
-  const hasMoreProducts = (provider.products?.length || 0) > 2;
+  const storeProducts = await getProductsByProvider(provider.id, 50);
+  const productsPreview = storeProducts.slice(0, 2);
+  const hasMoreProducts = storeProducts.length > 2;
 
   return (
     <>
@@ -205,32 +207,39 @@ export default async function ProviderProfilePage({ params }: ProviderProfilePag
           </div>
           {productsPreview.length > 0 ? (
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {productsPreview.map((product) => (
-                <div key={product.id} className="rounded-lg border border-black/10 bg-[var(--card)] p-3">
-                  <div className="mb-2 overflow-hidden rounded-md border border-black/10 bg-white">
-                    {product.image ? (
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        width={640}
-                        height={360}
-                        loading="lazy"
-                        className="h-36 w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-36 w-full items-center justify-center text-xs text-[var(--muted)]">
-                        No product image
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-sm font-semibold">{product.name}</p>
-                  {product.price ? <p className="text-xs text-[var(--muted)]">Price: {product.price}</p> : null}
-                  {product.description ? <p className="mt-1 text-xs text-[var(--muted)]">{product.description}</p> : null}
-                </div>
-              ))}
+              {productsPreview.map((product) => {
+                const image = product.imageUrls[0];
+                return (
+                  <Link
+                    key={product.id}
+                    href={`/p/${product.id}`}
+                    className="rounded-lg border border-black/10 bg-[var(--card)] p-3 transition hover:border-black/25"
+                  >
+                    <div className="mb-2 overflow-hidden rounded-md border border-black/10 bg-white">
+                      {image ? (
+                        <Image
+                          src={image}
+                          alt={product.name}
+                          width={640}
+                          height={360}
+                          loading="lazy"
+                          className="h-36 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-36 w-full items-center justify-center bg-[var(--accent)] text-xs font-semibold text-white">
+                          {product.name.split(" ").filter(Boolean).slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold">{product.name}</p>
+                    {product.price ? <p className="text-xs text-[var(--muted)]">{product.price}</p> : null}
+                    {product.description ? <p className="mt-1 text-xs text-[var(--muted)]">{product.description}</p> : null}
+                  </Link>
+                );
+              })}
             </div>
           ) : (
-            <p className="mt-2 text-sm text-[var(--muted)]">No products uploaded yet.</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">No products in their store yet.</p>
           )}
         </article>
 

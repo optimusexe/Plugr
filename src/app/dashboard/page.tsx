@@ -64,6 +64,17 @@ export default async function DashboardPage() {
   return (
     <main className="page-shell px-5 pb-8 sm:px-8 lg:px-16">
       <AppHeader />
+      <div className="mx-auto mb-6 flex max-w-6xl flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/10 bg-[var(--card)] px-5 py-4">
+        <p className="text-sm text-[var(--muted)]">
+          Manage the products you sell on Plugr Stores.
+        </p>
+        <a
+          href="/stores/manage"
+          className="inline-flex rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+        >
+          Manage My Store
+        </a>
+      </div>
       <AnalyticsShell providerId={profile.id} />
     </main>
   );

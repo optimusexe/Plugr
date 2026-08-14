@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 import { AppHeader } from "@/components/app-header";
 import { getProfileById } from "@/lib/profile-store";
+import { getProductsByProvider } from "@/lib/product-store";
 import { BreadcrumbSchema, WebPageSchema } from "@/lib/json-ld";
 import {
   getProviderSeoDescription,
@@ -59,6 +59,8 @@ export default async function ProviderProductsPage({ params }: ProviderProductsP
     notFound();
   }
 
+  const products = await getProductsByProvider(provider.id, 100);
+
   return (
     <>
       {WebPageSchema(`${provider.fullName} products on Plugr`, getProviderSeoDescription(provider))}
@@ -93,35 +95,41 @@ export default async function ProviderProductsPage({ params }: ProviderProductsP
           </Link>
         </div>
 
-        {provider.products && provider.products.length > 0 ? (
+        {products.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2">
-            {provider.products.map((product) => (
-              <article key={product.id} className="rounded-xl border border-black/10 bg-white p-4">
-                <div className="mb-3 overflow-hidden rounded-lg border border-black/10 bg-[var(--card)]">
-                  {product.image ? (
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      width={800}
-                      height={450}
-
-                      className="h-44 w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-44 w-full items-center justify-center text-xs text-[var(--muted)]">
-                      No product image
-                    </div>
-                  )}
-                </div>
-                <h2 className="text-base font-semibold">{product.name}</h2>
-                {product.price ? <p className="mt-1 text-sm text-[var(--muted)]">Price: {product.price}</p> : null}
-                {product.description ? <p className="mt-2 text-sm text-[var(--muted)]">{product.description}</p> : null}
-              </article>
-            ))}
+            {products.map((product) => {
+              const image = product.imageUrls[0];
+              return (
+                <Link
+                  key={product.id}
+                  href={`/p/${product.id}`}
+                  className="rounded-xl border border-black/10 bg-white p-4 transition hover:border-black/25"
+                >
+                  <div className="mb-3 overflow-hidden rounded-lg border border-black/10 bg-[var(--card)]">
+                    {image ? (
+                      <Image
+                        src={image}
+                        alt={product.name}
+                        width={800}
+                        height={450}
+                        className="h-44 w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-44 w-full items-center justify-center bg-[var(--accent)] text-sm font-semibold text-white">
+                        {product.name.split(" ").filter(Boolean).slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <h2 className="text-base font-semibold">{product.name}</h2>
+                  {product.price ? <p className="mt-1 text-sm text-[var(--muted)]">{product.price}</p> : null}
+                  {product.description ? <p className="mt-2 text-sm text-[var(--muted)]">{product.description}</p> : null}
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-xl border border-black/10 bg-white p-5 text-sm text-[var(--muted)]">
-            No products uploaded yet.
+            No products in their store yet.
           </div>
         )}
       </section>
